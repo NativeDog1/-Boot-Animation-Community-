@@ -281,6 +281,20 @@ def main():
     INDEX.write_text(json.dumps(entries, ensure_ascii=False, indent=2, default=str) + "\n", encoding="utf-8")
 
     print(f"PUBLISHED: {entry_id}  （共 {len(entries)} 条）")
+
+    # 顺手让 jsDelivr 的缓存失效。它缓存分支引用最长 12 小时，不 purge 的话
+    # 「网页用的是 jsDelivr」的用户会在半天内看不到刚上架的条目。
+    # 尽力而为：purge 失败绝不影响上架。
+    try:
+        purge = ("https://purge.jsdelivr.net/gh/"
+                 "NativeDog1/-Boot-Animation-Community-@main/data/index.json")
+        urllib.request.urlopen(
+            urllib.request.Request(purge, headers={"User-Agent": "boot-anim-bot"}),
+            timeout=30,
+        ).read()
+        print("PURGED: jsDelivr 缓存已请求失效")
+    except Exception as e:
+        print(f"purge 失败（不影响上架）: {e}")
     # 用绝对路径：相对路径在非仓库根目录下运行时会崩（踩过）
     OK_FILE.parent.mkdir(parents=True, exist_ok=True)
     OK_FILE.write_text(

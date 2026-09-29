@@ -3,50 +3,46 @@
 export const REPO = 'NativeDog1/-Boot-Animation-Community-';
 export const BRANCH = 'main';
 
-/** 目录的远端候选地址。
- *  实测：本机 jsDelivr 直连不通、raw.githubusercontent 直连可用；但有些网络环境正好相反。
- *  所以不猜顺序 —— 两个并行请求、谁先成功用谁。 */
+/** 目录的远端候选地址，**按顺序**尝试（不是竞速 —— 见下）。
+ *
+ *  为什么不能竞速：jsDelivr 会缓存分支引用（最长 12 小时），所以新投稿之后它常常
+ *  返回**过期**的目录；而缓存的响应又偏偏是最快的 —— 竞速会让"过期的那个赢"，
+ *  表现就是「我投稿了，网页却没显示」。实测踩到过。
+ *
+ *  所以：先 raw（无长缓存，本机实测直连可达），失败再退到 jsDelivr
+ *  （适合 raw 被墙的网络环境）。机器人上架时也会顺手 purge 一下 jsDelivr。 */
 export function catalogSources() {
   return [
-    `https://cdn.jsdelivr.net/gh/${REPO}@${BRANCH}/data/index.json`,
     `https://raw.githubusercontent.com/${REPO}/${BRANCH}/data/index.json`,
+    `https://cdn.jsdelivr.net/gh/${REPO}@${BRANCH}/data/index.json`,
   ];
 }
 
-/** 并行竞速两个 CDN，都失败再回退到本地文件（开发时用）。 */
+/** 按顺序尝试远端源，全失败再回退到本地文件（开发时用）。 */
 export async function loadCatalog(fetchImpl = fetch) {
-  const remotes = catalogSources();
-  try {
-    const entries = await new Promise((resolve, reject) => {
-      let failed = 0;
-      let settled = false;
-      for (const url of remotes) {
-        fetchImpl(url, { cache: 'no-cache' })
-          .then(async (r) => {
-            if (!r.ok) throw new Error('HTTP ' + r.status);
-            const d = await r.json();
-            if (!Array.isArray(d)) throw new Error('返回的不是数组');
-            return d;
-          })
-          .then((d) => { if (!settled) { settled = true; resolve(d); } })
-          .catch(() => {
-            failed++;
-            // 只有全部失败、且还没有成功过，才判定远端不可用
-            if (failed === remotes.length && !settled) reject(new Error('两个远端源都不可达'));
-          });
-      }
-    });
-    return { entries, url: '远端 CDN' };
-  } catch {
-    /* 落到本地 */
+  const errors = [];
+  for (const url of catalogSources()) {
+    try {
+      const r = await fetchImpl(url, { cache: 'no-cache' });
+      if (!r.ok) { errors.push(url + ' → HTTP ' + r.status); continue; }
+      const d = await r.json();
+      if (!Array.isArray(d)) { errors.push(url + ' → 返回的不是数组'); continue; }
+      return { entries: d, url: url.includes('jsdelivr') ? 'jsDelivr CDN' : 'GitHub raw' };
+    } catch (e) {
+      errors.push(url + ' → ' + (e && e.message ? e.message : e));
+    }
   }
 
   const local = 'data/index.json';
-  const r = await fetchImpl(local, { cache: 'no-cache' });
-  if (!r.ok) throw new Error('本地 ' + local + ' → HTTP ' + r.status);
-  const data = await r.json();
-  if (!Array.isArray(data)) throw new Error('本地 ' + local + ' 不是数组');
-  return { entries: data, url: local };
+  try {
+    const r = await fetchImpl(local, { cache: 'no-cache' });
+    if (r.ok) {
+      const data = await r.json();
+      if (Array.isArray(data)) return { entries: data, url: local };
+    }
+  } catch { /* 本地也没有就报错 */ }
+
+  throw new Error('目录取不到：' + errors.join('；'));
 }
 
 export function formatBytes(n) {
