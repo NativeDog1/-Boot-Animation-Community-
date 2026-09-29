@@ -50,7 +50,10 @@ FIELDS = {
 
 
 def parse_body(body: str) -> dict:
-    """把 issue 表单正文按 ### 标题切成字段。"""
+    """把 issue 表单正文按 ### 标题切成字段。
+
+    注意：可选项留空时，GitHub 会填字面量 `_No response_`。不清理的话它会被当成
+    真的标签/名称收进目录（实测踩到过）。"""
     out, cur = {}, None
     for line in (body or "").splitlines():
         m = re.match(r"^###\s+(.+?)\s*$", line)
@@ -61,7 +64,11 @@ def parse_body(body: str) -> dict:
             continue
         if cur:
             out[cur].append(line)
-    return {k: "\n".join(v).strip() for k, v in out.items()}
+    cleaned = {}
+    for k, v in out.items():
+        text = "\n".join(v).strip()
+        cleaned[k] = "" if text.lower() == "_no response_" else text
+    return cleaned
 
 
 def fail(msg: str):
