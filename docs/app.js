@@ -3,30 +3,50 @@
 export const REPO = 'NativeDog1/-Boot-Animation-Community-';
 export const BRANCH = 'main';
 
-/** 目录的候选地址：先 CDN（国内快），再原始地址，最后本地（开发时用）。 */
+/** 目录的远端候选地址。
+ *  实测：本机 jsDelivr 直连不通、raw.githubusercontent 直连可用；但有些网络环境正好相反。
+ *  所以不猜顺序 —— 两个并行请求、谁先成功用谁。 */
 export function catalogSources() {
   return [
     `https://cdn.jsdelivr.net/gh/${REPO}@${BRANCH}/data/index.json`,
     `https://raw.githubusercontent.com/${REPO}/${BRANCH}/data/index.json`,
-    'data/index.json',
   ];
 }
 
-/** 逐个尝试候选地址，返回第一个能解析成数组的结果。 */
+/** 并行竞速两个 CDN，都失败再回退到本地文件（开发时用）。 */
 export async function loadCatalog(fetchImpl = fetch) {
-  const errors = [];
-  for (const url of catalogSources()) {
-    try {
-      const r = await fetchImpl(url, { cache: 'no-cache' });
-      if (!r.ok) { errors.push(`${url} → HTTP ${r.status}`); continue; }
-      const data = await r.json();
-      if (!Array.isArray(data)) { errors.push(`${url} → 不是数组`); continue; }
-      return { entries: data, url };
-    } catch (e) {
-      errors.push(`${url} → ${e && e.message ? e.message : e}`);
-    }
+  const remotes = catalogSources();
+  try {
+    const entries = await new Promise((resolve, reject) => {
+      let failed = 0;
+      let settled = false;
+      for (const url of remotes) {
+        fetchImpl(url, { cache: 'no-cache' })
+          .then(async (r) => {
+            if (!r.ok) throw new Error('HTTP ' + r.status);
+            const d = await r.json();
+            if (!Array.isArray(d)) throw new Error('返回的不是数组');
+            return d;
+          })
+          .then((d) => { if (!settled) { settled = true; resolve(d); } })
+          .catch(() => {
+            failed++;
+            // 只有全部失败、且还没有成功过，才判定远端不可用
+            if (failed === remotes.length && !settled) reject(new Error('两个远端源都不可达'));
+          });
+      }
+    });
+    return { entries, url: '远端 CDN' };
+  } catch {
+    /* 落到本地 */
   }
-  throw new Error('目录取不到：' + errors.join('；'));
+
+  const local = 'data/index.json';
+  const r = await fetchImpl(local, { cache: 'no-cache' });
+  if (!r.ok) throw new Error('本地 ' + local + ' → HTTP ' + r.status);
+  const data = await r.json();
+  if (!Array.isArray(data)) throw new Error('本地 ' + local + ' 不是数组');
+  return { entries: data, url: local };
 }
 
 export function formatBytes(n) {
@@ -80,9 +100,17 @@ export function filterEntries(entries, opts = {}) {
   return out;
 }
 
-/** 网页唤起客户端的地址；客户端注册 bootanim:// 协议来接收。 */
+/** 网页唤起客户端的地址；客户端注册 bootanim:// 协议来接收。
+ *  把 name/author 也带上，客户端就不用去解析 index.json 了（省掉一个 JSON 依赖）。 */
 export function installUrl(entry) {
-  return `bootanim://install?id=${encodeURIComponent(entry.id)}&url=${encodeURIComponent(entry.video || '')}&sha256=${encodeURIComponent(entry.sha256 || '')}&bytes=${encodeURIComponent(entry.bytes || '')}`;
+  const q = (v) => encodeURIComponent(v == null ? '' : v);
+  return 'bootanim://install'
+    + '?id=' + q(entry.id)
+    + '&url=' + q(entry.video)
+    + '&sha256=' + q(entry.sha256)
+    + '&bytes=' + q(entry.bytes)
+    + '&name=' + q(entry.name)
+    + '&author=' + q(entry.author);
 }
 
 export function submitIssueUrl() {
