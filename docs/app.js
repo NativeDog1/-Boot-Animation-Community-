@@ -412,17 +412,7 @@ async function start() {
 
     $('wizBigHint').hidden = m.bytes <= 25 * 1024 * 1024;
     $('wizSubmit').href = submitIssueUrl({ name: m.name, slug });
-
-    if (m.previewDataUrl) {
-      const a = document.createElement('a');
-      a.className = 'btn';
-      a.textContent = '下载预览图（和视频一起传上去）';
-      a.href = m.previewDataUrl;
-      a.download = slug + '-preview.jpg';
-      a.style.marginTop = '10px';
-      a.style.display = 'inline-block';
-      box.querySelector('.wiz-card > div').appendChild(a);
-    }
+    // 预览图不用用户管：机器人会从视频里自己截一帧（挑最亮的候选帧）并提交进仓库
   }
 
   function copyMeta() {

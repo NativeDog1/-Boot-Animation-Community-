@@ -155,6 +155,7 @@ def probe_video(url: str):
         "height": height,
         "duration": duration,
         "filename": Path(url.split("?")[0]).name or "animation.mp4",
+        "path": str(tmp),   # 留给截预览帧用
     }
 
 
@@ -178,6 +179,69 @@ def derive_slug(raw: str, author: str, sha256: str) -> str:
         if SLUG.match(s):
             return s
     return re.sub(r"[^a-z0-9_-]+", "-", author.lower())[:20].strip("-") + "-" + sha256[:8]
+
+
+PREVIEW_DIR = ROOT / "data" / "previews"
+RAW_PREVIEW = ("https://raw.githubusercontent.com/"
+               "NativeDog1/-Boot-Animation-Community-/main/data/previews/")
+
+
+def frame_brightness(jpg: Path) -> float:
+    """把图缩成 1x1 灰度，那一个字节就是平均亮度。
+    比 PIL 省事，也不需要额外依赖（CI 里只装了 ffmpeg）。"""
+    try:
+        out = subprocess.run(
+            ["ffmpeg", "-v", "error", "-i", str(jpg), "-vf", "scale=1:1",
+             "-f", "rawvideo", "-pix_fmt", "gray", "-"],
+            capture_output=True, timeout=30,
+        )
+        return float(out.stdout[0]) if out.stdout else -1.0
+    except Exception:
+        return -1.0
+
+
+def extract_preview(video: Path, entry_id: str, duration: float):
+    """从视频里截一帧当预览图 —— 投稿者不需要上传预览图。
+
+    为什么多截几帧再挑：开机动画的开头常常是淡入的黑场、结尾常是完成态，
+    写死某一帧容易截到全黑。所以截 4 个时间点，挑平均亮度最高的那张
+    （同一亮度时取靠后的，因为完成态通常更好看）。
+    """
+    PREVIEW_DIR.mkdir(parents=True, exist_ok=True)
+    times = [1.0,
+             max(0.1, duration * 0.5) if duration else 1.5,
+             max(0.1, duration * 0.9) if duration else 2.0,
+             max(0.1, duration - 0.15) if duration else 2.5]
+
+    best_score, best_path = -1.0, None
+    for i, ts in enumerate(times):
+        tmp = PREVIEW_DIR / (".tmp-%s-%d.jpg" % (entry_id, i))
+        try:
+            subprocess.run(
+                ["ffmpeg", "-y", "-v", "error", "-ss", "%.2f" % ts, "-i", str(video),
+                 "-frames:v", "1", "-vf", "scale=1280:-2", "-q:v", "3", str(tmp)],
+                capture_output=True, timeout=60,
+            )
+        except Exception:
+            continue
+        if not tmp.exists() or tmp.stat().st_size == 0:
+            continue
+        score = frame_brightness(tmp)
+        if score > best_score:
+            if best_path is not None:
+                try: best_path.unlink()
+                except Exception: pass
+            best_score, best_path = score, tmp
+        else:
+            try: tmp.unlink()
+            except Exception: pass
+
+    if best_path is None:
+        return None
+    target = PREVIEW_DIR / (entry_id + ".jpg")
+    best_path.replace(target)
+    print(f"PREVIEW: 截了第 {best_score:.0f}/255 亮度的帧 → {target.name}")
+    return target
 
 
 def check_url_scheme(url: str):
@@ -219,6 +283,15 @@ def main():
     entry_id = f"{author.lower()}__{slug}"
     tags = [t.strip() for t in re.split(r"[,，]", f.get("tags", "")) if t.strip()]
 
+    # 预览图由机器人从视频里截一帧，不让投稿者上传；截出来的图会随条目一起提交进仓库
+    preview_url = ""
+    shot = extract_preview(Path(info["path"]), entry_id, info["duration"])
+    if shot is not None:
+        preview_url = RAW_PREVIEW + entry_id + ".jpg"
+    else:
+        # 截帧失败（极少见）也不能把预览设成视频地址 —— <img> 拿到 mp4 只会显示加载失败
+        preview_url = ""
+
     entry = {
         "id": entry_id,
         "name": name,
@@ -230,13 +303,15 @@ def main():
         "height": info["height"],
         "fps": 24,
         "duration": round(info["duration"], 2),
-        "preview": f.get("preview", "").strip() or url,   # 没给预览图就先复用视频地址
+        "preview": preview_url,
         "license": f.get("license", "").strip() or "未声明",
         "nsfw": nsfw,
         "submitted": date.today().isoformat(),
     }
     if tags:
         entry["tags"] = tags
+    if not preview_url:
+        print("警告：没能截出预览图，客户端会显示占位而不是封面")
 
     ANIM_DIR.mkdir(parents=True, exist_ok=True)
     target = ANIM_DIR / f"{entry_id}.yml"
