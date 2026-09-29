@@ -1,0 +1,16 @@
+# Python 编译产物（测试跑出来的，不该进仓库）
+__pycache__/
+*.pyc
+
+# 投稿机器人的运行时产物
+.github/last-error.txt
+.github/published.txt
+
+# 测试用的临时文件
+.tmp-*
+
+# ⚠️ 这个工作流文件暂时不能提交：
+# gh 用的 OAuth token 不允许推送 .github/workflows/ 下的文件（GitHub 的安全限制）。
+# 等跑过 `gh auth refresh -s workflow` 之后，删掉这两行再提交即可：
+#     git add -f .github/workflows/validate-submission.yml
+.github/workflows/
