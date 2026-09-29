@@ -113,8 +113,97 @@ export function installUrl(entry) {
     + '&author=' + q(entry.author);
 }
 
-export function submitIssueUrl() {
-  return `https://github.com/${REPO}/issues/new?template=submit-animation.yml`;
+export function submitIssueUrl(prefill = {}) {
+  const p = new URLSearchParams();
+  p.set('template', 'submit-animation.yml');
+  if (prefill.name) p.set('title', '[投稿] ' + prefill.name);
+  // issue form 的字段可以用同名字段预填；若某个字段没填上，用户在表单里补一下即可
+  for (const k of ['name', 'slug', 'video', 'license', 'nsfw', 'tags', 'description']) {
+    if (prefill[k]) p.set(k, prefill[k]);
+  }
+  return `https://github.com/${REPO}/issues/new?${p.toString()}`;
+}
+
+/** 把中文标题转成合法的英文标识（音译做不了，只做保守替换，剩下的让用户自己改） */
+export function suggestSlug(name) {
+  return String(name || '')
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/^-+|-+$/g, '')
+    .slice(0, 30);
+}
+
+/**
+ * 本地文件的准入检查。返回 { ok, issues[], warn[] }。
+ * 纯函数，方便测试；规则与 SCHEMA.md 保持一致。
+ */
+export function validateLocalFile(meta) {
+  const issues = [];
+  const warn = [];
+  const bytes = Number(meta.bytes || 0);
+  const duration = Number(meta.duration || 0);
+  const width = Number(meta.width || 0);
+  const height = Number(meta.height || 0);
+
+  if (!bytes) issues.push('读不到文件大小');
+  else if (bytes > 100 * 1024 * 1024) issues.push(`文件 ${formatBytes(bytes)}，超过社区上限 100 MB（4K 单个太大，建议出 1440p）`);
+  else if (bytes > 30 * 1024 * 1024) warn.push(`文件 ${formatBytes(bytes)}，偏大 —— 用户下载会慢，建议压到 30 MB 以内`);
+
+  if (duration && duration > 30) issues.push(`时长 ${duration.toFixed(1)} 秒，超过上限 30 秒（开机动画建议 5–10 秒）`);
+  else if (duration && duration > 12) warn.push(`时长 ${duration.toFixed(1)} 秒，偏长 —— 开机动画超过 10 秒容易让人烦`);
+
+  if (width && height) {
+    if (width > 3840 || height > 3840) issues.push(`${width}×${height} 超过 4K，没必要`);
+    else if (height >= 2160) warn.push('是 4K 素材 —— 能通过，但单个文件大、下载慢，社区主流是 1440p');
+  } else {
+    warn.push('读不到分辨率，确认一下是不是标准 mp4');
+  }
+
+  return { ok: issues.length === 0, issues, warn };
+}
+
+/** 在浏览器里算 sha256（WebCrypto），大文件会占用较多内存，所以先卡上限。 */
+export async function sha256OfFile(file) {
+  const buf = await file.arrayBuffer();
+  const digest = await crypto.subtle.digest('SHA-256', buf);
+  return [...new Uint8Array(digest)].map((b) => b.toString(16).padStart(2, '0')).join('');
+}
+
+/** 读视频元数据并在第 1 秒抽一帧当预览图。 */
+export async function readVideoMeta(file) {
+  const url = URL.createObjectURL(file);
+  const v = document.createElement('video');
+  v.preload = 'metadata';
+  v.muted = true;
+  v.src = url;
+  try {
+    await new Promise((resolve, reject) => {
+      v.onloadedmetadata = resolve;
+      v.onerror = () => reject(new Error('浏览器读不了这个文件，确认是 mp4 吗'));
+      setTimeout(() => reject(new Error('读取超时')), 15000);
+    });
+    let previewDataUrl = '';
+    try {
+      v.currentTime = Math.min(1, (v.duration || 2) / 2);
+      await new Promise((resolve) => {
+        v.onseeked = resolve;
+        setTimeout(resolve, 3000);
+      });
+      const c = document.createElement('canvas');
+      c.width = Math.min(1280, v.videoWidth || 1280);
+      c.height = Math.round((c.width * (v.videoHeight || 720)) / (v.videoWidth || 1280));
+      c.getContext('2d').drawImage(v, 0, 0, c.width, c.height);
+      previewDataUrl = c.toDataURL('image/jpeg', 0.85);
+    } catch { /* 抽帧失败不影响投稿 */ }
+    return {
+      width: v.videoWidth,
+      height: v.videoHeight,
+      duration: v.duration,
+      previewDataUrl,
+    };
+  } finally {
+    URL.revokeObjectURL(url);
+  }
 }
 
 /* ---------------------------------------------------------------- 浏览器端 */
@@ -127,20 +216,44 @@ async function start() {
   let all = [];
   let state = { query: '', tag: null, showNsfw: false, sort: 'newest' };
 
-  $('submitLink').href = submitIssueUrl();
-  $('submitLink2').href = submitIssueUrl();
+  // 投稿入口先打开页内向导，用户不用一上来就面对 GitHub
+  $('submitLink').onclick = (e) => { e.preventDefault(); openWizard(); };
+  $('submitLink2').onclick = (e) => { e.preventDefault(); openWizard(); };
+  setupWizard();
 
-  try {
-    const { entries, url } = await loadCatalog();
-    all = entries;
-    $('stats').textContent = `共 ${all.length} 个动画 · 数据源 ${new URL(url, location.href).host || '本地'}`;
-    renderTags();
-    renderSort();
-    render();
-  } catch (e) {
-    $('err').hidden = false;
-    $('err').textContent = '目录加载失败：' + e.message;
+  showSkeleton();
+
+  async function load() {
+    $('err').hidden = true;
+    try {
+      const { entries, url } = await loadCatalog();
+      all = entries;
+      $('stats').textContent = `共 ${all.length} 个动画 · 数据源 ${url}`;
+      renderTags();
+      renderSort();
+      render();
+    } catch (e) {
+      $('grid').replaceChildren();
+      $('err').hidden = false;
+      $('err').innerHTML = '目录加载失败：' + esc(e.message)
+        + '<br><button class="btn" id="retry" style="margin-top:12px">重试</button>';
+      const r = $('retry');
+      if (r) r.onclick = () => { showSkeleton(); load(); };
+    }
   }
+
+  function showSkeleton() {
+    $('empty').hidden = true;
+    const grid = $('grid');
+    grid.replaceChildren(...Array.from({ length: 6 }, () => {
+      const d = document.createElement('div');
+      d.className = 'skeleton';
+      d.innerHTML = '<div class="sk-thumb"></div><div class="sk-line"></div><div class="sk-line short"></div>';
+      return d;
+    }));
+  }
+
+  await load();
 
   $('q').addEventListener('input', (ev) => { state.query = ev.target.value; render(); });
   $('nsfw').addEventListener('change', (ev) => { state.showNsfw = ev.target.checked; render(); });
@@ -191,6 +304,15 @@ async function start() {
         <p class="muted small">${esc(e.author || '')} · ${esc(formatBytes(e.bytes))} · ${esc(formatDuration(e.duration))}</p>
         <div class="chips small">${(e.tags || []).slice(0, 3).map((t) => `<span class="tag">${esc(t)}</span>`).join('')}</div>
       </div>`;
+    // 预览图挂了也要有交代，别留一块空白
+    const img = el.querySelector('img');
+    img.onerror = () => {
+      const box = el.querySelector('.thumb');
+      const fb = document.createElement('div');
+      fb.className = 'fallback';
+      fb.textContent = '预览图加载失败';
+      box.appendChild(fb);
+    };
     el.onclick = () => openDetail(e);
     return el;
   }
@@ -218,6 +340,120 @@ async function start() {
     $('player').src = '';
     $('detail').close();
   };
+
+  /* ---------------------------------------------------------------- 投稿向导 */
+
+  let wizMeta = null;
+
+  function setupWizard() {
+    const drop = $('drop');
+    const pick = $('pickFile');
+    drop.onclick = () => pick.click();
+    drop.onkeydown = (e) => {
+      if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); pick.click(); }
+    };
+    pick.onchange = () => { if (pick.files && pick.files[0]) handleFile(pick.files[0]); };
+    ['dragenter', 'dragover'].forEach((ev) =>
+      drop.addEventListener(ev, (e) => { e.preventDefault(); drop.classList.add('over'); }));
+    ['dragleave', 'drop'].forEach((ev) =>
+      drop.addEventListener(ev, (e) => { e.preventDefault(); drop.classList.remove('over'); }));
+    drop.addEventListener('drop', (e) => {
+      const f = e.dataTransfer && e.dataTransfer.files && e.dataTransfer.files[0];
+      if (f) handleFile(f);
+    });
+    $('closeWizard').onclick = () => $('wizard').close();
+    $('wizCopy').onclick = () => copyMeta();
+  }
+
+  function openWizard() {
+    const dlg = $('wizard');
+    if (typeof dlg.showModal === 'function') dlg.showModal(); else dlg.setAttribute('open', '');
+  }
+
+  async function handleFile(file) {
+    const prog = $('wizProgress');
+    const box = $('wizResult');
+    prog.hidden = false;
+    prog.textContent = '正在读取 ' + file.name + '（' + formatBytes(file.size) + '）…';
+    box.innerHTML = '<p class="muted small">正在本地计算 sha256，大文件要等一会儿。视频不会上传到我们这里。</p>';
+    try {
+      const meta = await readVideoMeta(file);
+      prog.textContent = '正在本地计算 sha256（' + formatBytes(file.size) + '）…';
+      const sha256 = await sha256OfFile(file);
+      wizMeta = Object.assign(
+        { name: file.name.replace(/\.[^.]+$/, ''), file: file.name, bytes: file.size, sha256 },
+        meta,
+      );
+      prog.hidden = true;
+      renderWizard();
+    } catch (e) {
+      prog.hidden = true;
+      box.innerHTML = '<p class="wiz-list bad">读不了这个文件：' + esc(e.message) + '</p>';
+    }
+  }
+
+  function renderWizard() {
+    const m = wizMeta;
+    const check = validateLocalFile(m);
+    const slug = suggestSlug(m.name) || 'my-animation';
+    const box = $('wizResult');
+    box.innerHTML = `
+      <div class="wiz-card">
+        ${m.previewDataUrl ? '<img src="' + m.previewDataUrl + '" alt="预览帧">' : '<div class="muted small">（没能抽到预览帧）</div>'}
+        <div>
+          <dl class="wiz-facts">
+            <dt>文件</dt><dd>${esc(m.file)}</dd>
+            <dt>体积</dt><dd>${esc(formatBytes(m.bytes))}</dd>
+            <dt>分辨率</dt><dd>${esc(m.width ? m.width + '×' + m.height : '—')}</dd>
+            <dt>时长</dt><dd>${esc(m.duration ? m.duration.toFixed(1) + ' 秒' : '—')}</dd>
+            <dt>sha256</dt><dd>${esc(m.sha256.slice(0, 24))}…</dd>
+          </dl>
+          ${check.issues.length ? '<ul class="wiz-list bad">' + check.issues.map((x) => '<li>' + esc(x) + '</li>').join('') + '</ul>' : ''}
+          ${check.warn.length ? '<ul class="wiz-list warn">' + check.warn.map((x) => '<li>' + esc(x) + '</li>').join('') + '</ul>' : ''}
+          ${check.ok ? '<p class="small" style="color:#5fd38a">✅ 符合社区规范，可以投稿</p>' : ''}
+        </div>
+      </div>`;
+
+    $('wizBigHint').hidden = m.bytes <= 25 * 1024 * 1024;
+    $('wizSubmit').href = submitIssueUrl({ name: m.name, slug });
+
+    if (m.previewDataUrl) {
+      const a = document.createElement('a');
+      a.className = 'btn';
+      a.textContent = '下载预览图（和视频一起传上去）';
+      a.href = m.previewDataUrl;
+      a.download = slug + '-preview.jpg';
+      a.style.marginTop = '10px';
+      a.style.display = 'inline-block';
+      box.querySelector('.wiz-card > div').appendChild(a);
+    }
+  }
+
+  function copyMeta() {
+    if (!wizMeta) { toast('先选一个视频文件', true); return; }
+    const m = wizMeta;
+    const text = [
+      '名称：' + m.name,
+      '文件：' + m.file,
+      '分辨率：' + (m.width ? m.width + '×' + m.height : '—'),
+      '时长：' + (m.duration ? m.duration.toFixed(2) + ' 秒' : '—'),
+      '体积：' + m.bytes + ' 字节',
+      'sha256：' + m.sha256,
+    ].join('\n');
+    navigator.clipboard.writeText(text).then(
+      () => toast('已复制，粘贴到 GitHub 表单里就行'),
+      () => toast('复制失败，请手动选中复制', true),
+    );
+  }
+
+  function toast(msg, isErr) {
+    const t = $('toast');
+    t.textContent = msg;
+    t.className = 'toast' + (isErr ? ' err' : '');
+    t.hidden = false;
+    clearTimeout(toast._t);
+    toast._t = setTimeout(() => { t.hidden = true; }, 2600);
+  }
 }
 
 function esc(s) {
