@@ -1,5 +1,5 @@
 name: 投稿开机动画
-description: 公开分享你做的开机动画（机器人会自动校验并上架）
+description: 把视频拖进来就行，其余交给机器人
 title: "[投稿] "
 labels:
   - submission
@@ -7,82 +7,34 @@ body:
   - type: markdown
     attributes:
       value: |
-        投稿前请先读 [README](https://github.com/NativeDog1/-Boot-Animation-Community-/blob/main/README.md) 和 [SCHEMA](https://github.com/NativeDog1/-Boot-Animation-Community-/blob/main/SCHEMA.md)。
+        ### 你只需要做一件事：把视频文件拖进下面的「视频」框
 
-        **视频请放到你自己仓库的 Releases 里**（免费，单文件最大 2 GB），然后填直链。
-        直链形如 `https://github.com/你/仓库/releases/download/v1/文件名.mp4` —— 必须能直接下载，不要网盘分享页。
+        拖进去之后 GitHub 会自己上传它、自动把链接填好。**sha256、字节数、分辨率、时长，机器人会自己算** —— 你一个数字都不用填。
+
+        也可以贴一个 https 直链（例如你自己仓库 Releases 里的地址）。投稿规范见 [README](https://github.com/NativeDog1/-Boot-Animation-Community-/blob/main/README.md)。
+
+  - type: textarea
+    id: video
+    attributes:
+      label: 视频
+      description: 把 mp4 拖进这个框（推荐），或粘贴 https 直链
+      placeholder: 把视频文件拖到这里…
+    validations:
+      required: true
 
   - type: input
     id: name
     attributes:
-      label: 显示名
-      description: 客户端里显示的名字，≤ 32 字
+      label: 名称
+      description: 留空就用文件名。≤ 32 字
       placeholder: 赛博霓虹
-    validations:
-      required: true
 
   - type: input
-    id: slug
+    id: tags
     attributes:
-      label: 英文标识
-      description: 小写字母/数字/连字符，用来做文件 id。例如 cyber-neon
-      placeholder: cyber-neon
-    validations:
-      required: true
-
-  - type: input
-    id: video
-    attributes:
-      label: 视频 https 直链
-      description: 指向 mp4 文件本身
-      placeholder: https://github.com/你/仓库/releases/download/v1/xxx.mp4
-    validations:
-      required: true
-
-  - type: input
-    id: sha256
-    attributes:
-      label: 视频 sha256
-      description: 64 位小写十六进制。Windows 上可用 certutil -hashfile 文件.mp4 SHA256 得到
-      placeholder: 3f2a...
-    validations:
-      required: true
-
-  - type: input
-    id: bytes
-    attributes:
-      label: 文件字节数
-      description: 精确大小，客户端会按它和 sha256 双重校验
-      placeholder: "10485760"
-    validations:
-      required: true
-
-  - type: input
-    id: resolution
-    attributes:
-      label: 分辨率
-      description: 形如 2560x1440
-      placeholder: 2560x1440
-    validations:
-      required: true
-
-  - type: input
-    id: duration
-    attributes:
-      label: 时长（秒）
-      description: 建议 5–10 秒
-      placeholder: "7.0"
-    validations:
-      required: true
-
-  - type: input
-    id: preview
-    attributes:
-      label: 预览图 https 直链
-      description: 一张 jpg/png。用户下载前看到的就是它
-      placeholder: https://raw.githubusercontent.com/你/仓库/main/preview.jpg
-    validations:
-      required: true
+      label: 标签
+      description: 逗号分隔，用于筛选。留空也行
+      placeholder: 赛博朋克, 深色, 蓝色
 
   - type: dropdown
     id: license
@@ -92,7 +44,7 @@ body:
         - CC-BY-4.0
         - CC0-1.0
         - 自创，允许自由转载
-        - 其他（请在描述里写明）
+        - 其他（请在下面说明）
     validations:
       required: true
 
@@ -106,23 +58,6 @@ body:
         - "是"
     validations:
       required: true
-
-  - type: input
-    id: tags
-    attributes:
-      label: 标签
-      description: 逗号分隔，用于筛选
-      placeholder: 赛博朋克, 深色, 蓝色
-    validations:
-      required: false
-
-  - type: textarea
-    id: description
-    attributes:
-      label: 一句话描述
-      placeholder: 蓝色数据流 + 霓虹脉冲，深色调，适合夜间开机
-    validations:
-      required: false
 
   - type: checkboxes
     id: declare
