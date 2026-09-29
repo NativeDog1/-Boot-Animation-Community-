@@ -1,0 +1,26 @@
+[
+  {
+    "id": "nativedog1__cyber-neon",
+    "name": "赛博霓虹",
+    "author": "NativeDog1",
+    "description": "蓝色数据流 + 霓虹脉冲，深色调，适合夜间开机",
+    "video": "https://github.com/NativeDog1/boot-animations/releases/download/v1/cyber-neon-1440p.mp4",
+    "sha256": "0000000000000000000000000000000000000000000000000000000000000000",
+    "bytes": 10485760,
+    "width": 2560,
+    "height": 1440,
+    "fps": 24,
+    "duration": 7.0,
+    "preview": "https://raw.githubusercontent.com/NativeDog1/boot-animations/main/preview-cyber-neon.jpg",
+    "license": "CC-BY-4.0",
+    "tags": [
+      "赛博朋克",
+      "深色",
+      "蓝色"
+    ],
+    "nsfw": false,
+    "has_audio": true,
+    "min_app": "1.1.0",
+    "submitted": "2026-09-29"
+  }
+]

@@ -1,0 +1,51 @@
+name: 举报条目
+description: 举报目录里的某个开机动画（内容不合适、侵权、或文件有问题）
+title: "[举报] "
+labels:
+  - report
+body:
+  - type: markdown
+    attributes:
+      value: |
+        核实后条目会被**直接下架**（删除 `data/animations/<id>.yml` 并刷新索引）。
+
+        请如实填写。恶意举报会被忽略。
+
+  - type: input
+    id: entry_id
+    attributes:
+      label: 条目 id
+      description: 在客户端详情里能看到，形如 author__slug
+      placeholder: nativedog1__cyber-neon
+    validations:
+      required: true
+
+  - type: dropdown
+    id: reason
+    attributes:
+      label: 举报原因
+      options:
+        - 含违法内容
+        - 含色情内容
+        - 含暴力或仇恨内容
+        - 侵犯版权（不是作者本人或未获授权）
+        - 文件有问题（下载不了 / 哈希不匹配 / 播放异常）
+        - 其他
+    validations:
+      required: true
+
+  - type: textarea
+    id: detail
+    attributes:
+      label: 说明
+      description: 越具体越好。如果是侵权，请说明权利归属
+    validations:
+      required: true
+
+  - type: checkboxes
+    id: confirm
+    attributes:
+      label: 确认
+      options:
+        - label: 我确认以上信息属实，并理解虚假举报会被忽略
+          required: true

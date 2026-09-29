@@ -1,0 +1,25 @@
+# 示例条目：把这个文件复制成 data/animations/<owner>__<slug>.yml 改成你自己的
+#
+# 注意：实际投稿请走 Issues → 「投稿开机动画」，机器人会自动生成这个文件。
+# 这个文件放在仓库里是为了让客户端开发时有个真实可解析的样本。
+id: nativedog1__cyber-neon
+name: 赛博霓虹
+author: NativeDog1
+description: 蓝色数据流 + 霓虹脉冲，深色调，适合夜间开机
+video: https://github.com/NativeDog1/boot-animations/releases/download/v1/cyber-neon-1440p.mp4
+sha256: '0000000000000000000000000000000000000000000000000000000000000000'
+bytes: 10485760
+width: 2560
+height: 1440
+fps: 24
+duration: 7.0
+preview: https://raw.githubusercontent.com/NativeDog1/boot-animations/main/preview-cyber-neon.jpg
+license: CC-BY-4.0
+tags:
+  - 赛博朋克
+  - 深色
+  - 蓝色
+nsfw: false
+has_audio: true
+min_app: 1.1.0
+submitted: 2026-09-29
