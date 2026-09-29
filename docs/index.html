@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>开机动画社区</title>
+<meta name="description" content="所有人公开分享的开机动画，挑一个装到自己的电脑上。">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<header class="top">
+  <div class="wrap">
+    <div class="brand">
+      <span class="dot"></span>
+      <h1>开机动画社区</h1>
+    </div>
+    <p class="tagline">所有人公开分享的开机动画。挑一个，装到你自己的电脑上。</p>
+    <div class="tools">
+      <input id="q" type="search" placeholder="搜索名称、作者、标签…" autocomplete="off">
+      <a class="btn primary" id="submitLink" href="#" target="_blank" rel="noopener">投稿</a>
+    </div>
+    <div class="stats" id="stats"></div>
+  </div>
+</header>
+
+<main class="wrap">
+  <section class="filters">
+    <div class="row">
+      <span class="label">标签</span>
+      <div id="tags" class="chips"></div>
+    </div>
+    <div class="row">
+      <span class="label">排序</span>
+      <div id="sort" class="chips"></div>
+      <label class="switch">
+        <input type="checkbox" id="nsfw">
+        <span>显示不适宜内容</span>
+      </label>
+    </div>
+  </section>
+
+  <section id="grid" class="grid" aria-live="polite"></section>
+  <p id="empty" class="empty" hidden>没有匹配的动画。换个关键词，或者<a href="#" id="submitLink2" target="_blank" rel="noopener">投一个</a>。</p>
+  <p id="err" class="err" hidden></p>
+</main>
+
+<footer class="bottom">
+  <div class="wrap">
+    <p>目录数据来自 <a href="https://github.com/NativeDog1/-Boot-Animation-Community-" target="_blank" rel="noopener">GitHub 上的社区仓库</a>；视频由各自作者托管。</p>
+    <p>内容为自助投稿 + 事后下架。看到不合适的，去仓库提「举报」Issue。</p>
+  </div>
+</footer>
+
+<dialog id="detail" class="detail">
+  <button class="close" id="closeDetail" aria-label="关闭">×</button>
+  <div class="detail-body">
+    <video id="player" controls playsinline preload="metadata"></video>
+    <div class="meta">
+      <h2 id="dName"></h2>
+      <p id="dAuthor" class="muted"></p>
+      <p id="dDesc"></p>
+      <dl id="dFacts"></dl>
+      <div class="actions">
+        <a class="btn primary" id="install">装到我的开机动画</a>
+        <a class="btn" id="download" download>直接下载</a>
+      </div>
+      <p class="muted small">
+        点「装」会唤起本机客户端（如果装了）；它会下载并用 sha256 校验后再安装。
+        客户端没装的话就用「直接下载」，然后手动放进软件里。
+      </p>
+    </div>
+  </div>
+</dialog>
+
+<script type="module" src="app.js"></script>
+</body>
+</html>

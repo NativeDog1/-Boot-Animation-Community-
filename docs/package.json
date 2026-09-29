@@ -1,0 +1,9 @@
+{
+  "name": "boot-animation-community-site",
+  "private": true,
+  "type": "module",
+  "description": "开机动画社区网页版：纯静态，零服务器，直接读社区仓库的 data/index.json",
+  "scripts": {
+    "serve": "node serve.mjs"
+  }
+}
