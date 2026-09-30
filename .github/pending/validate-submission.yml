@@ -1,0 +1,124 @@
+name: 校验并上架投稿
+
+# 自助投稿的自动化：Issue 一提交就校验，通过就自动写进目录并关闭 Issue。
+# 这是「开放自助上传」能成立的关键 —— 不靠人工审核，靠机器把关。
+#
+# 机器把的关：
+#   必填项齐全 / 声明已勾选 / 标识合法 / sha256 格式 / 体积上限 / 时长上限
+#   两个直链可达且不是网页 / 声明字节数与直链实际大小一致
+# 机器把关不了的（内容是否合适）：交给「举报 → 下架」和客户端的 nsfw 过滤。
+
+on:
+  issues:
+    types: [opened, edited, reopened]
+
+permissions:
+  contents: write
+  issues: write
+
+concurrency:
+  group: submission-${{ github.event.issue.number }}
+  cancel-in-progress: false
+
+jobs:
+  publish:
+    # 只处理带 submission 标签的 Issue（即通过表单提交的投稿）
+    if: contains(github.event.issue.labels.*.name, 'submission')
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: 安装依赖
+        run: |
+          pip install --quiet pyyaml
+          # 机器人要自己读分辨率与时长，所以必须装 ffprobe
+          sudo apt-get update -qq && sudo apt-get install -y -qq ffmpeg
+
+      - name: 校验并生成条目
+        id: process
+        continue-on-error: true
+        env:
+          ISSUE_BODY: ${{ github.event.issue.body }}
+          ISSUE_USER: ${{ github.event.issue.user.login }}
+          # 机器人要把视频搬进仓库自己的托管 Release，所以需要 token（contents: write 已给）。
+          # 失败时不会阻断上架 —— 会退回用投稿人给的链接，并在回复里说清。
+          GH_TOKEN: ${{ github.token }}
+        run: python .github/scripts/process_submission.py
+
+      - uses: actions/setup-node@v4
+        if: steps.process.outcome == 'success'
+        with:
+          node-version: "22"
+
+      - name: 重建网站（数据变了，页面必须跟着变）
+        # 网站是预渲染的：每条动画一个真页面，所以目录一变就要重新生成。
+        # 这一步失败会**同时挡住上架** —— 宁可不上架，也不要出现"数据有、页面没有"的分裂状态。
+        if: steps.process.outcome == 'success'
+        run: |
+          node --test tools/catalog.test.mjs
+          node tools/build-site.mjs
+          node tools/verify-site.mjs
+
+      - name: 提交上架
+        if: steps.process.outcome == 'success'
+        run: |
+          git config user.name "boot-anim-bot"
+          git config user.email "actions@users.noreply.github.com"
+          git add data docs .github/published.txt
+          if git diff --cached --quiet; then
+            echo "没有变化（可能是重复提交）"
+          else
+            git commit -m "feat(catalog): 上架投稿 #${{ github.event.issue.number }}"
+            git push
+          fi
+
+      - name: 让 CDN 缓存失效
+        # 必须在推送之后 —— jsDelivr 缓存分支引用最长 12 小时。
+        # 这一步曾经写在机器人里（也就是推送之前），结果 purged 的是旧内容，等于白跑。
+        if: steps.process.outcome == 'success'
+        run: |
+          curl -s --max-time 30 \
+            "https://purge.jsdelivr.net/gh/NativeDog1/-Boot-Animation-Community-@main/data/index.json" \
+            || echo "purge 失败不影响上架"
+
+      - name: 回复「已上架」并关闭
+        if: steps.process.outcome == 'success'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const fs = require('fs');
+            const body = fs.existsSync('.github/published.txt')
+              ? fs.readFileSync('.github/published.txt', 'utf8')
+              : '已上架。';
+            await github.rest.issues.createComment({
+              owner: context.repo.owner, repo: context.repo.repo,
+              issue_number: context.issue.number,
+              body: '✅ ' + body + '\n\n客户端刷新目录后就能看到（索引是 `data/index.json`）。\n\n如果之后发现内容有问题，任何人都可以提「举报」Issue，核实后会被下架。'
+            });
+            await github.rest.issues.update({
+              owner: context.repo.owner, repo: context.repo.repo,
+              issue_number: context.issue.number, state: 'closed'
+            });
+
+      - name: 回复「校验未通过」
+        if: steps.process.outcome != 'success'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const fs = require('fs');
+            const err = fs.existsSync('.github/last-error.txt')
+              ? fs.readFileSync('.github/last-error.txt', 'utf8').trim()
+              : '校验脚本异常退出，请看 Actions 日志。';
+            await github.rest.issues.createComment({
+              owner: context.repo.owner, repo: context.repo.repo,
+              issue_number: context.issue.number,
+              body: '❌ 这次没通过：\n\n> ' + err + '\n\n**直接编辑本 Issue 改正后会自动重试**，不用重新投稿。'
+            });
+            await github.rest.issues.addLabels({
+              owner: context.repo.owner, repo: context.repo.repo,
+              issue_number: context.issue.number, labels: ['needs-fix']
+            });
