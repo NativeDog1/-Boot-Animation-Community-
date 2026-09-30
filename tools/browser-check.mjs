@@ -37,6 +37,8 @@ const all = (name) => argv.reduce((acc, a, i) => (a === name && argv[i + 1] ? [.
 const clicks = all('--click');
 const evals = all('--eval');
 const dumps = all('--dump');
+const setFile = flag('--setfile');       // 选择器：往这个 file input 里塞文件
+const uploadPath = flag('--upload');     // 要塞进去的本地文件路径
 const waitMs = Number(flag('--wait', 900)) || 900;
 const jsonOnly = argv.includes('--json');
 const port = 9333 + Math.floor(Math.random() * 200);
@@ -109,7 +111,8 @@ try {
       result.exceptions.push(d.exception?.description || d.text || 'unknown');
     }
     if (msg.method === 'Log.entryAdded' && msg.params.entry.level === 'error') {
-      result.consoleErrors.push(`[${msg.params.entry.source}] ${msg.params.entry.text}`);
+      const e = msg.params.entry;
+      result.consoleErrors.push(`[${e.source}] ${e.text}${e.url ? ' ← ' + e.url : ''}`);
     }
   });
   const send = (method, params = {}) => new Promise((resolve) => {
@@ -134,6 +137,21 @@ try {
       `(() => { const el = document.querySelector(${JSON.stringify(sel)}); if (!el) return 'NOT-FOUND'; el.click(); return 'clicked'; })()`,
     );
     await sleep(waitMs);
+  }
+
+  // 往 file input 里塞一个真实文件（CDP 的 DOM.setFileInputFiles，会自己触发 change）——
+  // 这是唯一能验证「拖进一个大文件之后界面怎么反应」的办法。
+  if (setFile && uploadPath) {
+    await send('DOM.enable');
+    const doc = await send('DOM.getDocument');
+    const found = await send('DOM.querySelector', { nodeId: doc.root.nodeId, selector: setFile });
+    if (!found || !found.nodeId) {
+      result.uploads = { selector: setFile, state: 'NOT-FOUND' };
+    } else {
+      const r = await send('DOM.setFileInputFiles', { files: [uploadPath], nodeId: found.nodeId });
+      result.uploads = { selector: setFile, state: r && r.error ? `ERROR ${r.error.message}` : 'set', file: uploadPath };
+      await sleep(waitMs * 3);   // 读元数据 + 抽帧需要一点时间
+    }
   }
   for (const expr of evals) {
     result.evals.push({ expr, value: await evaluate(expr) });

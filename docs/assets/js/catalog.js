@@ -292,8 +292,8 @@ export function validateLocalFile(meta) {
 
   if (!bytes) issues.push('读不到文件大小');
   else if (bytes > MAX_GB_LIMIT) issues.push(`文件 ${formatBytes(bytes)}，超过 2 GB —— 这是 GitHub Release 的单文件上限，也是免费方案能支撑的极限`);
-  else if (bytes > WARN_LIMIT) warn.push(`文件 ${formatBytes(bytes)}，下载会很久（虽然客户端支持断点续传）。建议同时再提供一版 1440p（约 10 MB）单独投稿`);
-  else if (bytes > 30 * 1024 * 1024) warn.push(`文件 ${formatBytes(bytes)}，偏大 —— 超过 25 MB 就不能直接拖进投稿表单了，需要先把视频传到你自己的 GitHub Release，再把直链贴进表单`);
+  else if (bytes > WARN_LIMIT) warn.push(`文件 ${formatBytes(bytes)}，下载会很久（客户端支持断点续传）。建议同时再提供一版 1440p（约 10 MB）单独投稿`);
+  else if (bytes > 25 * 1024 * 1024) warn.push(`文件 ${formatBytes(bytes)}，偏大 —— 超过 25 MB 就无法直接拖进投稿表单，这时贴一个能直接下载的链接即可（机器人会替你搬进社区仓库长期托管，不需要你自己建仓库）`);
 
   if (duration && duration > 30) issues.push(`时长 ${duration.toFixed(1)} 秒，超过上限 30 秒（开机动画建议 5–10 秒）`);
   else if (duration && duration > 12) warn.push(`时长 ${duration.toFixed(1)} 秒，偏长 —— 开机动画超过 10 秒容易让人烦`);
@@ -348,6 +348,13 @@ export async function readVideoMeta(file) {
       previewDataUrl,
     };
   } finally {
+    // 先把视频元素从 blob URL 上摘下来，再撤销它。否则元素可能还在加载那个已经失效的
+    // 地址，控制台会刷一串 ERR_FILE_NOT_FOUND（实测一次投稿向导能刷 9 条）——
+    // 功能不受影响，但排错时这些噪音会掩盖真问题。
+    try {
+      v.removeAttribute('src');
+      v.load();
+    } catch { /* 忽略 */ }
     URL.revokeObjectURL(url);
   }
 }
