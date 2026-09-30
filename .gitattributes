@@ -1,0 +1,15 @@
+# 统一换行：仓库里一律存 LF，避免"整文件都改了"的假 diff。
+# 生成的 docs/ 是 Node 用 LF 写出来的，而 Windows 上 autocrlf 会在检出时改成 CRLF，
+# 于是每次重建都产生一堆无意义差异 —— 这里一次性钉死。
+* text=auto eol=lf
+
+# 明确二进制，免得被当成文本做换行转换
+*.png binary
+*.jpg binary
+*.jpeg binary
+*.webp binary
+*.ico binary
+*.mp4 binary
+*.exe binary
+*.woff binary
+*.woff2 binary

@@ -30,6 +30,22 @@ export async function init({ repo }) {
     manifest = null;
   }
 
+  // 生成器已经把版本区按构建时的 data/software.json 预渲染好了（静态可读、SEO 友好）。
+  // 所以取不到清单时**绝不能覆盖**它 —— 否则一次网络抖动就会把「已发布 1.0.0」
+  // 抹成「还没有发布安装包」，那是在向用户说假话。
+  const staticVersion = versionHost ? (versionHost.dataset.staticVersion || '') : '';
+  if (!manifest && staticVersion) {
+    if (versionHost) {
+      versionHost.append(el('p', {
+        class: 'muted small',
+        style: 'margin-top:var(--s-2)',
+        text: '（暂时取不到最新版本清单，上面显示的是本站构建时记录的信息）',
+      }));
+    }
+    document.body.dataset.ready = 'true';
+    return;
+  }
+
   const version = manifest && manifest.version ? String(manifest.version) : '';
   const downloadUrl = (manifest && (manifest.downloadUrl || manifest.url)) || SOFTWARE.releasesUrl;
   const releaseDate = manifest && manifest.releaseDate ? String(manifest.releaseDate) : '';

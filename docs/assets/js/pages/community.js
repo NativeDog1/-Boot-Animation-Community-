@@ -63,60 +63,21 @@ export async function init({ repo }) {
     }
   }
 
-  /* ── 投稿流程（照实写） ── */
-  if (guideHost) {
-    clear(guideHost);
-
-    const steps = el('ol', { class: 'steps' });
-    const items = [
-      ['点「投稿动画」', '页面会打开一个向导：选本地 mp4 → 浏览器算 sha256、抽一帧预览图、检查体积与时长 → 生成预填好的 GitHub 表单。'],
-      ['在 GitHub 表单里提交 Issue', '同一个视频文件直接拖进表单的「视频」文本框，GitHub 会托管它并自动填好直链。表单里还要填名称、许可、是否含不适宜内容。'],
-      ['机器人自动校验', '它会检查：必填项是否齐全、两个直链是否可达且不是网页、声明的字节数与实际是否一致、哈希格式、体积与时长上限。'],
-      ['通过就自动上架', '机器人写好条目文件、刷新 data/index.json、回复「已上架」并关闭 Issue。不通过会在 Issue 里列出缺哪一项，**直接编辑该 Issue 改正即可自动重试**。'],
-      ['出现在网站与客户端里', '网站每次打开都读最新目录；客户端刷新目录后就能在「浏览社区」里看到。'],
-    ];
-    for (const [title, text] of items) {
-      steps.append(el('li', {}, [el('b', { text: title }), el('p', { class: 'muted small', text })]));
-    }
-    // 上面循环里没法优雅插文本节点，重写一遍（内容少，直白更好）
-    clear(steps);
-    for (const [title, text] of items) {
-      const li = el('li');
-      li.append(el('b', { text: title }));
-      li.append(el('p', { class: 'muted small', text }));
-      steps.append(li);
-    }
-    guideHost.append(steps);
-
+  /* ── 投稿流程 ──
+     这一段（步骤、为什么用 Issue、内容与下架）是**生成器预渲染的静态内容**：
+     它是内容而不是动态列表，所以关掉 JS 也必须看得到，爬虫也要读得到。
+     这里只在缺少静态内容时兜底渲染一次。 */
+  if (guideHost && !guideHost.childElementCount) {
+    guideHost.append(el('p', {
+      class: 'muted small',
+      text: '投稿流程说明没能加载。直接看仓库里的 README 与 SCHEMA.md，或点下面的按钮打开投稿表单。',
+    }));
     const actions = el('div', { class: 'btn-row' });
-    const submit = el('button', { class: 'btn btn--primary', type: 'button', text: '投稿动画', 'data-open-wizard': '' });
-    actions.append(submit);
+    actions.append(el('button', { class: 'btn btn--primary', type: 'button', text: '投稿动画', 'data-open-wizard': '' }));
     actions.append(el('a', {
       class: 'btn', href: issueUrl('submit-animation.yml'), target: '_blank', rel: 'noopener', text: '直接打开 GitHub 表单',
     }));
-    actions.append(el('a', {
-      class: 'btn btn--ghost', href: issueUrl('report.yml'), target: '_blank', rel: 'noopener', text: '举报某条内容',
-    }));
-    actions.append(el('a', { class: 'btn btn--ghost', href: `${REPO_URL}/blob/main/SCHEMA.md`, target: '_blank', rel: 'noopener', text: '字段规范 SCHEMA.md' }));
     guideHost.append(actions);
-
-    guideHost.append(el('div', { class: 'callout callout--info', style: 'margin-top:var(--s-4)' }, [
-      el('div', {}, [
-        el('b', { text: '为什么是 Issue 而不是 Pull Request：' }),
-        el('span', {
-          text: ' 投稿需要校验"这个直链真的能下、哈希真的对得上"—— 这些机器能做完，不该让投稿人手写 YAML 再等人工审核。Issue 表单 + 机器人 = 自助投稿但不失控。要批量改数据（比如统一改标签）时，维护者仍然可以直接提 PR 改 data/animations/。',
-        }),
-      ]),
-    ]));
-
-    guideHost.append(el('div', { class: 'callout callout--warn', style: 'margin-top:var(--s-3)' }, [
-      el('div', {}, [
-        el('b', { text: '内容与下架：' }),
-        el('span', {
-          text: ' 本目录是自助投稿 + 事后处置，没有前置人工审核。每条都必须显式标注是否含不适宜内容（漏填会校验失败）；客户端默认隐藏这类条目。任何人对任何条目都可以提举报 Issue，核实后直接下架。',
-        }),
-      ]),
-    ]));
   }
 
   document.body.dataset.ready = 'true';

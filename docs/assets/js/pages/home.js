@@ -6,6 +6,7 @@
  */
 import { $, el, icon, stateBlock, skeletonGrid, clear } from '../ui/dom.js';
 import { animationCard } from '../ui/card.js';
+import { posterPlayer } from '../ui/video.js';
 import { filterEntries, creatorsOf, SORTS } from '../catalog.js';
 import { rootPath, SOFTWARE } from '../config.js';
 
@@ -20,6 +21,21 @@ export async function init({ repo }) {
     entries = await repo.getAnimations();
   } catch (error) {
     failed = error;
+  }
+
+  /* ── Hero：让"看起来能播"的地方真的能播 ──
+     静态 HTML 里是一个播放器外壳 + 预览图（禁用 JS 时是张图，说得通）；
+     JS 一到位就换成真正的播放器：点了才加载视频（首页首屏不下载任何视频）。 */
+  const heroHost = $('#ba-home-hero');
+  if (heroHost && !failed && entries.length) {
+    const newestWithVideo = filterEntries(entries, { sort: 'newest' }).find((e) => e.video);
+    if (newestWithVideo) {
+      heroHost.replaceChildren(posterPlayer({
+        src: newestWithVideo.video,
+        poster: newestWithVideo.preview,
+        title: newestWithVideo.name,
+      }));
+    }
   }
 
   /* ── 真实统计（没有就留空，不编） ── */

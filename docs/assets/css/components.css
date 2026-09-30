@@ -518,6 +518,17 @@ a.tag:hover { color: var(--fg); border-color: var(--line-strong); }
 .facts dd { margin: 0; color: var(--fg); word-break: break-word; }
 .facts--mono dd { font-family: var(--mono); font-size: var(--t-xs); }
 
+/* ─────────────────────────────── 详情页 ─────────────────────────────── */
+/* 标题在两栏之上（源码顺序 = 视觉顺序 = h1 → h2），窄屏时天然变成"标题先出现" */
+.detail-head { margin-bottom: var(--s-5); }
+.detail-head h1 { margin-bottom: var(--s-2); }
+.detail-layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1.5fr) minmax(300px, 1fr);
+  gap: var(--s-6);
+  align-items: start;
+}
+
 /* ─────────────────────────────── 面包屑 / 标签页 ─────────────────────────────── */
 .breadcrumb { display: flex; gap: var(--s-2); align-items: center; font-size: var(--t-sm); color: var(--fg-3); margin-bottom: var(--s-4); flex-wrap: wrap; }
 .breadcrumb a { color: var(--fg-3); }

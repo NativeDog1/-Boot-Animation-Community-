@@ -58,6 +58,20 @@ function readJson(path, fallback) {
   }
 }
 
+/**
+ * 目录数据会变成**文件路径**（`animations/<id>/`、`creators/<author>/`），
+ * 而数据来自公开投稿 —— 所以每个用作路径片段的字段都必须先过这一关。
+ *
+ * 不设防的话，一个 id 写成 `../../../evil` 就能让生成器往仓库外面写文件。
+ * 机器人也会校验 id 格式，但那不是同一条信任链（也有人在本地直接改 data/ 再构建）。
+ */
+const SAFE_SEGMENT = /^[A-Za-z0-9][A-Za-z0-9._-]{0,63}$/;
+function safeSegment(value) {
+  const s = String(value == null ? '' : value).trim();
+  if (!s || s.includes('..') || !SAFE_SEGMENT.test(s)) return '';
+  return s;
+}
+
 function formatBytes(n) {
   const v = Number(n);
   if (!isFinite(v) || v <= 0) return '';
@@ -291,12 +305,12 @@ function homePage(entries, p) {
         </div>
         ${facts}
       </div>
-      <div class="hero__media">
+      <div class="hero__media" id="ba-home-hero">
         <div class="player">
           ${ogImage
             ? `<img class="player__poster" src="${attr(ogImage)}" alt="社区动画预览" loading="eager" fetchpriority="high" style="cursor:default">`
             : `<div class="thumb-fallback"><span>社区还没有动画</span></div>`}
-          <div class="player__state">社区最新的一段片头 · 详情页可以点开播放</div>
+          <div class="player__state">社区最新的一段片头</div>
         </div>
       </div>
     </div>
@@ -364,7 +378,13 @@ function homePage(entries, p) {
 
 function libraryPage(entries, p) {
   const sorted = entries.slice().sort((a, b) => String(b.submitted || '').localeCompare(String(a.submitted || '')));
-  const cards = sorted.map((e) => staticCard(e, p, { priority: sorted.indexOf(e) < 4 })).join('');
+  // 预渲染上限：卡片全塞进 HTML 会随目录线性膨胀（几千条就是几 MB）。
+  // 静态列出最新一批（爬虫与禁用 JS 都能看到），其余由 pages/animations.js 按需渲染。
+  const STATIC_LIMIT = 48;
+  const cards = sorted.slice(0, STATIC_LIMIT).map((e, i) => staticCard(e, p, { priority: i < 4 })).join('');
+  const overflow = sorted.length > STATIC_LIMIT
+    ? `<noscript><p class="muted small" style="margin-top:var(--s-4)">共 ${sorted.length} 个动画；本页静态列出最新 ${STATIC_LIMIT} 个。开启 JavaScript 可查看全部并筛选。</p></noscript>`
+    : '';
   return `<section class="section section--tight">
   <div class="wrap">
     <nav class="breadcrumb" aria-label="面包屑"><a href="${p}">首页</a><span class="breadcrumb__sep">/</span><span>动画库</span></nav>
@@ -379,7 +399,7 @@ function libraryPage(entries, p) {
     </div>
     <div id="ba-filters" class="stack" style="margin-bottom:var(--s-5)"></div>
     <p class="muted small" id="ba-status" style="margin-bottom:var(--s-4)"></p>
-    <div id="ba-grid" class="grid">${cards}</div>
+    <div id="ba-grid" class="grid">${cards}</div>${overflow}
     <div class="btn-row" style="justify-content:center;margin-top:var(--s-6)">
       <button class="btn" id="ba-more" type="button" hidden>继续加载</button>
     </div>
@@ -409,7 +429,11 @@ function detailPage(e, related, p, depth) {
       <a href="${p}animations/">动画库</a><span class="breadcrumb__sep">/</span>
       <span>${esc(e.name || e.id)}</span>
     </nav>
-    <div class="detail-layout" style="display:grid;grid-template-columns:minmax(0,1.5fr) minmax(300px,1fr);gap:var(--s-6);align-items:start">
+    <header class="detail-head">
+      <h1>${esc(e.name || e.id)}</h1>
+      ${e.description ? `<p class="muted">${esc(e.description)}</p>` : ''}
+    </header>
+    <div class="detail-layout">
       <div class="stack">
         <div id="ba-player">
           <div class="player">
@@ -435,8 +459,6 @@ function detailPage(e, related, p, depth) {
         </div>
       </div>
       <aside class="stack">
-        <h1 style="margin-bottom:var(--s-1)">${esc(e.name || e.id)}</h1>
-        ${e.description ? `<p class="muted">${esc(e.description)}</p>` : ''}
         <div class="btn-row" id="ba-actions"></div>
         ${tags ? `<div class="card__tags">${tags}</div>` : ''}
         <dl class="facts" id="ba-facts">
@@ -472,7 +494,7 @@ function communityPage(entries, p) {
     <h2>作者</h2>
     <div id="ba-community-creators" style="margin-bottom:var(--s-7)"></div>
     <h2>投稿流程</h2>
-    <div id="ba-community-guide"></div>
+    <div id="ba-community-guide">${communityGuide()}</div>
   </div>
 </section>
 `;
@@ -506,7 +528,64 @@ function creatorPage(creator, entries, p) {
 `;
 }
 
-function downloadPage(p) {
+/**
+ * 软件版本区的静态渲染。生成器在构建时读 data/software.json，
+ * 所以**禁用 JS 也能看到版本号和下载按钮**（SEO 与"静态优先"要求）。
+ * 页面加载后 download.js 会拿最新数据再确认一次，两者渲染结果一致。
+ */
+function softwareView(manifest) {
+  const version = manifest && manifest.version ? String(manifest.version) : '';
+  const date = manifest && manifest.releaseDate ? String(manifest.releaseDate) : '';
+  const size = manifest && manifest.size ? formatBytes(manifest.size) : '';
+  const url = (manifest && (manifest.downloadUrl || manifest.url))
+    || `https://github.com/${SITE.softwareRepo}/releases/latest`;
+  return { version, date, size, url };
+}
+
+function softwareFacts(manifest) {
+  const req = (manifest && manifest.requirements) || {};
+  const ins = (manifest && manifest.install) || {};
+  const rows = [
+    ['适用系统', req.os || 'Windows 10 / 11（x64）'],
+    ['运行时', req.runtime || '不需要装 .NET 运行时（用系统自带的 .NET Framework 4.x）'],
+    ['管理员权限', req.admin === false ? '不需要' : req.admin || '不需要'],
+    ['安装位置', ins.dir || '%LOCALAPPDATA%\\Programs\\BootAnimation\\'],
+    ['开机自启', ins.runKey || 'HKCU\\...\\Run\\BootAnimation'],
+    ['数据目录（卸载保留）', ins.dataDir || '%LOCALAPPDATA%\\BootAnimation\\'],
+  ];
+  if (manifest && manifest.version) rows.push(['发布版本', String(manifest.version)]);
+  if (manifest && manifest.sha256) rows.push(['SHA-256', String(manifest.sha256)]);
+  if (manifest && manifest.signed === false) rows.push(['代码签名', '暂无（首次运行会有 SmartScreen 提示）']);
+  return `<dl class="facts">${rows.map(([k, v]) => `<dt>${esc(k)}</dt><dd>${esc(v)}</dd>`).join('')}</dl>`;
+}
+
+/**
+ * 投稿流程的静态版本。这是**内容**（不是动态列表），所以必须预渲染：
+ * 否则关掉 JS 就是一片空白，爬虫也读不到"怎么投稿"。
+ * pages/community.js 只负责填最新上架与作者，不再重建这一段。
+ */
+function communityGuide() {
+  const issue = (tpl) => `https://github.com/${SITE.repo}/issues/new?template=${tpl}`;
+  const steps = [
+    ['点「投稿动画」', '页面会打开一个向导：选本地 mp4 → 浏览器算 sha256、抽一帧预览图、检查体积与时长 → 生成预填好的 GitHub 表单。'],
+    ['在 GitHub 表单里提交 Issue', '同一个视频文件直接拖进表单的「视频」文本框，GitHub 会托管它并自动填好直链。表单里还要填名称、许可、是否含不适宜内容。'],
+    ['机器人自动校验', '它会检查：必填项是否齐全、两个直链是否可达且不是网页、声明的字节数与实际是否一致、哈希格式、体积与时长上限。'],
+    ['通过就自动上架', '机器人写好条目文件、刷新 data/index.json、重建网站，然后回复「已上架」并关闭 Issue。不通过会在 Issue 里列出缺哪一项，<b>直接编辑该 Issue 改正即可自动重试</b>。'],
+    ['出现在网站与客户端里', '网站每次打开都读最新目录；客户端刷新目录后就能在「浏览社区」里看到。'],
+  ].map(([t, d]) => `<li><b>${esc(t)}</b><p class="muted small">${esc(d)}</p></li>`).join('');
+  return `<ol class="steps">${steps}</ol>
+    <div class="btn-row">
+      <button class="btn btn--primary" type="button" data-open-wizard>投稿动画</button>
+      <a class="btn" href="${issue('submit-animation.yml')}" target="_blank" rel="noopener">直接打开 GitHub 表单</a>
+      <a class="btn btn--ghost" href="${issue('report.yml')}" target="_blank" rel="noopener">举报某条内容</a>
+      <a class="btn btn--ghost" href="https://github.com/${SITE.repo}/blob/main/SCHEMA.md" target="_blank" rel="noopener">字段规范 SCHEMA.md</a>
+    </div>
+    <div class="callout callout--info" style="margin-top:var(--s-4)"><div><b>为什么是 Issue 而不是 Pull Request：</b> 投稿需要校验「这个直链真的能下、哈希真的对得上」—— 这些机器能做完，不该让投稿人手写 YAML 再等人工审核。Issue 表单 + 机器人 = 自助投稿但不失控。要批量改数据（比如统一改标签）时，维护者仍然可以直接提 PR 改 data/animations/。</div></div>
+    <div class="callout callout--warn" style="margin-top:var(--s-3)"><div><b>内容与下架：</b> 本目录是自助投稿 + 事后处置，没有前置人工审核。每条都必须显式标注是否含不适宜内容（漏填会校验失败）；客户端默认隐藏这类条目。任何人对任何条目都可以提举报 Issue，核实后直接下架。</div></div>`;
+}
+
+function downloadPage(p, manifest) {
+  const dlv = softwareView(manifest);
   return `<section class="section section--tight">
   <div class="wrap">
     <nav class="breadcrumb" aria-label="面包屑"><a href="${p}">首页</a><span class="breadcrumb__sep">/</span><span>下载</span></nav>
@@ -516,12 +595,18 @@ function downloadPage(p) {
         <p class="section__sub">Windows 10 / 11（x64）· 不需要管理员权限 · 不需要安装 .NET 运行时</p>
       </div>
     </div>
-    <div id="ba-dl-version" style="margin-bottom:var(--s-4)"></div>
-    <div class="btn-row" id="ba-dl-actions" style="margin-bottom:var(--s-6)"></div>
+    <div id="ba-dl-version" data-static-version="${esc(dlv.version)}" style="margin-bottom:var(--s-4)">${dlv.version
+      ? `<div class="row"><span class="badge badge--ok">已发布</span><b>最新版本 ${esc(dlv.version)}</b>${dlv.date ? `<span class="muted small">${esc(dlv.date)}</span>` : ''}${dlv.size ? `<span class="muted small">${esc(dlv.size)}</span>` : ''}</div>`
+      : `<div class="callout callout--warn"><div><b>还没有发布安装包。</b> 网站不会给一个点了 404 的下载按钮。下面是当前可行的路径。</div></div>`}</div>
+    <div class="btn-row" id="ba-dl-actions" style="margin-bottom:var(--s-6)">
+      <a class="btn btn--primary btn--lg" href="${attr(dlv.url)}" rel="noopener">${dlv.version ? '下载 Windows 版' : '查看 Releases 页面'}</a>
+      <a class="btn btn--lg" href="https://github.com/${SITE.softwareRepo}/releases" target="_blank" rel="noopener">全部版本</a>
+      <a class="btn btn--ghost btn--lg" href="https://github.com/${SITE.softwareRepo}/releases" target="_blank" rel="noopener">更新日志</a>
+    </div>
     <div style="display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:var(--s-6);align-items:start" class="detail-layout">
       <div>
         <h2>版本与运行环境</h2>
-        <div id="ba-dl-facts"></div>
+        <div id="ba-dl-facts">${softwareFacts(manifest)}</div>
       </div>
       <div>
         <h2>安装前需要知道</h2>
@@ -670,10 +755,23 @@ async function loadDocs() {
 }
 
 async function main() {
-  const entries = readJson(join(REPO_ROOT, 'data', 'index.json'), []);
-  if (!Array.isArray(entries)) throw new Error('data/index.json 不是数组');
+  const raw = readJson(join(REPO_ROOT, 'data', 'index.json'), []);
+  if (!Array.isArray(raw)) throw new Error('data/index.json 不是数组');
+
+  // 路径安全闸门：id 非法的条目直接跳过并报警，绝不拿它拼路径
+  const entries = [];
+  for (const item of raw) {
+    const id = safeSegment(item && item.id);
+    if (!id) {
+      console.warn(`[build-site] 跳过非法 id 的条目：${JSON.stringify(item && item.id)}`);
+      continue;
+    }
+    entries.push({ ...item, id });
+  }
+
+  const software = readJson(join(REPO_ROOT, 'data', 'software.json'), null);
   const { docs, groups } = await loadDocs();
-  console.log(`[build-site] 目录 ${entries.length} 条 · 文档 ${docs.length} 篇`);
+  console.log(`[build-site] 目录 ${entries.length} 条 · 文档 ${docs.length} 篇 · 软件 ${software && software.version ? software.version : '未发布'}`);
 
   const written = [];
   const track = (rel, content) => { write(rel, content); written.push(rel); };
@@ -748,9 +846,13 @@ async function main() {
   /* 作者 */
   const byAuthor = new Map();
   for (const e of entries) {
-    if (!e.author) continue;
-    if (!byAuthor.has(e.author)) byAuthor.set(e.author, []);
-    byAuthor.get(e.author).push(e);
+    const author = safeSegment(e.author);
+    if (!author) {
+      if (e.author) console.warn(`[build-site] 跳过非法作者名：${JSON.stringify(e.author)}`);
+      continue;
+    }
+    if (!byAuthor.has(author)) byAuthor.set(author, []);
+    byAuthor.get(author).push(e);
   }
 
   track('creators/index.html', page({
@@ -803,7 +905,7 @@ async function main() {
         softwareHelp: new URL('docs/', SITE.baseUrl).href,
       },
     },
-    body: downloadPage('../'),
+    body: downloadPage('../', software),
     bodyAttrs: { 'data-page': 'download' },
   }));
   track('about/index.html', page({

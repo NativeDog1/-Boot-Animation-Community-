@@ -35,6 +35,11 @@ export function initMobileNav() {
     panel.hidden = !open;
     burger.setAttribute('aria-expanded', open ? 'true' : 'false');
     document.body.style.overflow = open ? 'hidden' : '';
+    // 面板打开时把后面的内容设为 inert：键盘 Tab 不会跑到被遮住的链接上，
+    // 读屏也不会念到看不见的内容。比手写焦点陷阱简单且不容易出错。
+    for (const node of document.querySelectorAll('#ba-main, .site-footer, .site-header .brand, .site-header .nav, .header-actions .btn')) {
+      try { node.inert = open; } catch { /* 老浏览器不支持 inert，退化为无焦点约束 */ }
+    }
     if (open) {
       const first = panel.querySelector('a, button');
       if (first) first.focus({ preventScroll: true });
