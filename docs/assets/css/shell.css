@@ -1,0 +1,141 @@
+/* ============================================================================
+   应用外壳：左侧栏 + 顶部 Header + 主区（需求 §3 / §4 / §42）
+   ----------------------------------------------------------------------------
+   以前站点是「顶栏 + 内容」一栏到底；这一层把它变成两栏外壳，并且**只动外壳**：
+   页面内容、页脚、移动端菜单都不改。
+
+   三档响应式（需求 §42 的 Large / Medium / Small）：
+     > 1000px  侧栏 240px，显示分组与文字
+     ≤ 1000px  折叠成 64px 图标栏，只有圆点 + title 提示（不塞一堆图标库）
+     ≤ 700px   侧栏整体隐藏，沿用站点原有的汉堡菜单（那条路已经能用，不重复造）
+
+   颜色/圆角/阴影/动效一律引用 tokens.css，这里不写死任何色值。
+   ========================================================================== */
+
+.shell {
+  display: grid;
+  grid-template-columns: var(--nav-w) minmax(0, 1fr);
+  min-height: 100vh;
+  min-width: var(--shell-min);
+}
+
+/* ── 侧栏 ───────────────────────────────────────────────────────────────── */
+.shell__aside {
+  position: sticky;
+  top: 0;
+  align-self: start;
+  height: 100vh;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-5);
+  padding: var(--s-4) var(--s-3) var(--s-4);
+  background: var(--surface-1);
+  border-right: 1px solid var(--line);
+  z-index: var(--z-nav);
+}
+
+.shell__brand {
+  display: flex;
+  align-items: center;
+  gap: var(--s-2);
+  padding: var(--s-1) var(--s-2) var(--s-2);
+  text-decoration: none;
+  color: inherit;
+  border-radius: var(--r-2);
+}
+.shell__brand:hover { background: var(--surface-2); }
+.shell__brand-text { display: flex; flex-direction: column; line-height: 1.2; min-width: 0; }
+
+.shell__nav { display: flex; flex-direction: column; gap: var(--nav-group-gap); }
+.shell__group { display: flex; flex-direction: column; gap: var(--s-1); }
+
+/* 分组标题用 <p> 而不是标题元素：主内容里的 <h1> 才是页面标题，
+   在它之前插一个 <h2> 会打乱标题层级（自检脚本会拦）。 */
+.shell__group-title {
+  margin: 0 0 var(--s-1);
+  padding: 0 var(--s-2);
+  font-size: var(--t-xs);
+  letter-spacing: .14em;
+  text-transform: uppercase;
+  color: var(--fg-3);
+}
+
+.shell__list { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 1px; }
+
+.shell__link {
+  display: flex;
+  align-items: center;
+  gap: var(--s-2);
+  min-height: var(--nav-item-h);
+  padding: 0 var(--s-2);
+  border-radius: var(--r-1);
+  color: var(--fg-2);
+  font-size: var(--t-sm);
+  text-decoration: none;
+  transition: background var(--dur-1) var(--ease), color var(--dur-1) var(--ease);
+}
+.shell__link:hover { background: var(--surface-2); color: var(--fg); }
+.shell__link:focus-visible { outline: 2px solid var(--brand-hover); outline-offset: 2px; }
+
+.shell__dot {
+  width: 6px;
+  height: 6px;
+  flex: 0 0 auto;
+  border-radius: var(--r-pill);
+  background: var(--line-strong);
+  transition: background var(--dur-1) var(--ease), box-shadow var(--dur-1) var(--ease);
+}
+.shell__link:hover .shell__dot { background: var(--fg-3); }
+
+/* 当前页：品牌色的竖条 + 极淡底色。用 inset 阴影而不是 border，
+   这样切换时不会让文字挪一个像素。 */
+.shell__link[aria-current="page"] {
+  background: var(--brand-dim);
+  color: var(--fg);
+  box-shadow: inset 2px 0 0 var(--brand);
+}
+.shell__link[aria-current="page"] .shell__dot { background: var(--brand-hover); box-shadow: 0 0 0 3px var(--brand-dim); }
+
+.shell__label { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+.shell__foot {
+  margin-top: auto;
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-1);
+  padding: var(--s-3) var(--s-2) 0;
+  border-top: 1px solid var(--line);
+  font-size: var(--t-xs);
+  color: var(--fg-3);
+}
+.shell__foot a { color: var(--fg-2); text-decoration: none; }
+.shell__foot a:hover { color: var(--fg); text-decoration: underline; }
+
+/* ── 右列 ───────────────────────────────────────────────────────────────── */
+.shell__col {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;   /* 没有它，宽表格/长 id 会把整栏撑破 */
+}
+.shell__col > main { flex: 1; }
+
+/* ── Medium：折叠成图标栏（§42）──────────────────────────────────────────── */
+@media (max-width: 1000px) {
+  .shell { grid-template-columns: var(--nav-w-collapsed) minmax(0, 1fr); }
+  .shell__label,
+  .shell__group-title,
+  .shell__brand-text,
+  .shell__foot { display: none; }
+  .shell__aside { align-items: center; padding-left: var(--s-1); padding-right: var(--s-1); }
+  .shell__list { align-items: center; }
+  .shell__link { justify-content: center; padding: 0; width: var(--nav-item-h); }
+  .shell__dot { width: 8px; height: 8px; }
+  .shell__link[aria-current="page"] { box-shadow: inset 0 -2px 0 var(--brand); }
+}
+
+/* ── Small：侧栏收起，交给站点原有的汉堡菜单（§42）─────────────────────── */
+@media (max-width: 700px) {
+  .shell { grid-template-columns: minmax(0, 1fr); }
+  .shell__aside { display: none; }
+}

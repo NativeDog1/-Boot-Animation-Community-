@@ -1,4 +1,4 @@
-﻿/**
+/**
  * build-site.mjs — 把 data/index.json + 文档内容**预渲染成静态页面**。
  *
  * 为什么必须预渲染（而不是纯客户端路由）：
@@ -101,6 +101,76 @@ const NAV_EXTRA = [
 ];
 
 const BRAND_MARK = `<svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M4 6.5h16v11H4z" stroke="#fff" stroke-width="1.6"/><path d="M9.5 10.2v3.6l4.2-1.8z" fill="#fff"/></svg>`;
+
+/**
+ * 侧栏（需求 §3/§4）：左侧栏 + Header + 主区，取代原来的"顶栏 + 内容"。
+ *
+ * 分组名做了**诚实替换**：需求给的 SYSTEM 组里是 Startup / System Status —— 那是桌面
+ * 应用的概念，本站是静态站点，没有也不可能有这些页面。所以按本站真实存在的页面分成
+ * PRODUCT / DOCS / COMMUNITY / APP，组数与结构照需求，但不会出现点了 404 的入口。
+ *
+ * 兜底：NAV 里任何没被下面映射表覆盖的链接都会落进最后一组，所以将来往 NAV 加页面不会
+ * 从侧栏里消失（宁可多一项，也不要静默丢掉）。
+ */
+function shell(current, depth) {
+  const p = prefix(depth);
+  const GROUPS = [
+    { title: 'PRODUCT', hrefs: ['/', '/animations/', '/download/', '/community/'] },
+    { title: 'DOCS', hrefs: ['/docs/'] },
+    { title: 'COMMUNITY', hrefs: ['/creators/'] },
+    { title: 'APP', hrefs: ['/changelog/', '/about/'] },
+  ];
+  const used = new Set();
+  const groups = GROUPS.map((group) => ({ title: group.title, items: [] }));
+  const rest = { title: '更多', items: [] };
+
+  // 首页不在 NAV 里（顶栏靠 brand 回首页），但侧栏的 PRODUCT 组要有它 —— 需求 §4 把
+  // Home 列在第一项。这里补一条，不依赖 NAV 的内容。
+  groups[0].items.push({ href: '', label: '首页' });
+
+  // 归一化后再比：NAV 里是相对路径且**没有前导斜杠**（animations/），而分组表按页面目录写
+  // （/animations/）。第一次归一化只去了尾斜杠，不够；两边都要去头去尾才对得上。
+  const key = (h) => String(h).replace(/^\/+/, '').replace(/\/+$/, '');
+
+  for (const n of NAV) {
+    let placed = false;
+    for (let i = 0; i < GROUPS.length; i += 1) {
+      // DOCS 这一组要把 /docs/installation 之类的子页也收进去
+      if (GROUPS[i].hrefs.some((h) => key(n.href) === key(h) || (key(h) !== '/' && key(n.href).startsWith(key(h))))) {
+        groups[i].items.push(n);
+        used.add(n.href);
+        placed = true;
+        break;
+      }
+    }
+    if (!placed) rest.items.push(n);
+  }
+  if (rest.items.length > 0) groups.push(rest);
+
+  const body = groups
+    .filter((group) => group.items.length > 0)
+    .map((group) => {
+      const items = group.items.map((n) => {
+        const active = current && n.href.startsWith(current) ? ' aria-current="page"' : '';
+        return `<li><a class="shell__link" href="${p}${n.href}"${active} title="${attr(n.label)}">`
+          + `<span class="shell__dot" aria-hidden="true"></span><span class="shell__label">${n.label}</span></a></li>`;
+      }).join('');
+      return `<div class="shell__group"><p class="shell__group-title">${group.title}</p><ul class="shell__list">${items}</ul></div>`;
+    })
+    .join('');
+
+  return `<aside class="shell__aside" aria-label="站点导航">
+  <a class="shell__brand" href="${p}" aria-label="${attr(SITE.name)} 首页">
+    <span class="brand__mark">${BRAND_MARK}</span>
+    <span class="shell__brand-text"><span class="brand__name">${SITE.name}</span><span class="brand__sub">${SITE.nameZh}</span></span>
+  </a>
+  <nav class="shell__nav">${body}</nav>
+  <div class="shell__foot">
+    <a href="https://github.com/${SITE.repo}" rel="noopener">GitHub</a>
+    <span class="shell__ver">静态站点 · 无账号</span>
+  </div>
+</aside>`;
+}
 
 function header(depth, current) {
   const p = prefix(depth);
@@ -219,15 +289,21 @@ ${ogImage ? `<meta name="twitter:image" content="${attr(ogImage)}">` : ''}
 <link rel="stylesheet" href="${p}assets/css/tokens.css">
 <link rel="stylesheet" href="${p}assets/css/base.css">
 <link rel="stylesheet" href="${p}assets/css/components.css">
+<link rel="stylesheet" href="${p}assets/css/shell.css">
 ${jsonLd}
 </head>
 <body${bodyAttrs}>
 <a class="skip" href="#ba-main">跳到主内容</a>
-${header(o.depth, o.current)}
-<main id="ba-main">
+<div class="shell">
+  ${shell(o.current, o.depth)}
+  <div class="shell__col">
+    ${header(o.depth, o.current)}
+    <main id="ba-main">
 ${o.body}
-</main>
-${footer(o.depth)}
+    </main>
+    ${footer(o.depth)}
+  </div>
+</div>
 <script type="module" src="${p}assets/js/app.js"></script>
 </body>
 </html>
