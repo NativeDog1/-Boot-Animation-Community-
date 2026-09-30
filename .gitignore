@@ -9,8 +9,15 @@ __pycache__/
 # 测试用的临时文件
 .tmp-*
 
+# 提交信息草稿（写一次性的长提交说明时用，不要进仓库）
+.commitmsg.txt
+.commit-msg*.txt
+
 # ⚠️ 这个工作流文件暂时不能提交：
 # gh 用的 OAuth token 不允许推送 .github/workflows/ 下的文件（GitHub 的安全限制）。
-# 等跑过 `gh auth refresh -s workflow` 之后，删掉这两行再提交即可：
-#     git add -f .github/workflows/validate-submission.yml
+# 现在这台机器上 gh 的 scopes 是 gist/read:org/repo，**没有 workflow**，
+# 所以投稿机器人还没跑在 GitHub 上 —— 提 Issue 不会有任何自动响应。
+# 修好它只要两步：
+#     gh auth refresh -s workflow        # 浏览器里点一下授权
+#     git add -f .github/workflows/validate-submission.yml   # 然后删掉下面这行
 .github/workflows/
