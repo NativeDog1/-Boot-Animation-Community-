@@ -20,6 +20,8 @@ import subprocess
 import sys
 import tempfile
 import time
+import urllib.error
+import urllib.parse
 import urllib.request
 from datetime import date
 from pathlib import Path
@@ -47,6 +49,9 @@ MAX_DURATION = 30.0
 CHUNK = 1 << 20
 READ_TIMEOUT = 300
 MAX_ATTEMPTS = 4
+# 代管用的两个端点：建 release 走 api.github.com，传资产走 uploads.github.com
+GITHUB_API = "https://api.github.com"
+GITHUB_UPLOAD = "https://uploads.github.com"
 
 # 表单标题 → 内部字段名（表单里只保留这几项，其余靠推导）
 FIELDS = {
@@ -304,6 +309,100 @@ def check_url_scheme(url: str):
         fail("链接必须是 https。把视频拖进表单比手填链接更省事。")
 
 
+def api_request(req, timeout=120):
+    """带 token 调 GitHub API。"""
+    token = os.environ.get("GH_TOKEN") or os.environ.get("GITHUB_TOKEN") or ""
+    req.add_header("Authorization", "Bearer " + token)
+    req.add_header("Accept", "application/vnd.github+json")
+    req.add_header("X-GitHub-Api-Version", "2022-11-28")
+    req.add_header("User-Agent", "boot-anim-bot")
+    return urllib.request.urlopen(req, timeout=timeout)
+
+
+# 托管位置：仓库里**既有**的那个 Release（用户 2026-09-29 建的 `assets-v1`，标题「社区视频资源」）
+# 用它而不是每条投稿建一个 release —— 一处集中、页面可浏览、下架只需删一个资产。
+HOSTING_TAG = os.environ.get("HOSTING_TAG") or "assets-v1"
+
+
+def asset_name(entry_id, info):
+    """资产名用纯 ASCII：URL 里不要出现百分号编码（这是那个 release 说明里定的约定）。"""
+    ext = ".mp4"
+    m = re.search(r"\.(mp4|mov|m4v|webm)$", Path(info["filename"]).name, re.I)
+    if m:
+        ext = "." + m.group(1).lower()
+    return entry_id + ext
+
+
+def rehost(entry_id, display_name, author, info, source_url):
+    """把投稿文件搬进社区仓库的托管 Release（默认 `assets-v1`），返回长期直链；失败返回 None。
+
+    为什么要有这一步：对没有代码经验的人来说，「建仓库 → 建 Release → 传文件 → 复制直链」
+    本身就是一道过不去的墙。所以投稿人只需要把文件给出来（拖进表单的附件，或者一个
+    临时直链），托管由机器人接手：
+      · Release 单文件上限 2 GB，公开仓库免费；
+      · 目录里的 video 从此是社区自己的地址，不会因为作者删库或分享过期而失效；
+      · 下架 = 删掉这个资产 + 条目文件。
+    失败时**不阻断上架**：退回用投稿人给的链接，并在 Issue 回复里说清。
+    """
+    repo = os.environ.get("GITHUB_REPOSITORY", "")
+    token = os.environ.get("GH_TOKEN") or os.environ.get("GITHUB_TOKEN") or ""
+    if not repo or not token:
+        print("没有 GITHUB_REPOSITORY / GH_TOKEN，跳过代管（video 仍指向原链接）", flush=True)
+        return None
+
+    name = asset_name(entry_id, info)
+    label = (display_name or entry_id) + " · " + (author or "匿名")
+
+    try:
+        # 1) 找托管 release；没有就按同样的约定建一个
+        release = None
+        try:
+            with api_request(urllib.request.Request(
+                    GITHUB_API + "/repos/" + repo + "/releases/tags/" + HOSTING_TAG)) as r:
+                release = json.loads(r.read().decode("utf-8"))
+        except urllib.error.HTTPError as e:
+            if e.code != 404:
+                raise
+        if release is None:
+            payload = json.dumps({
+                "tag_name": HOSTING_TAG,
+                "name": "社区视频资源",
+                "body": "投稿视频的托管位置：客户端从这里下载，并用 sha256 校验完整性。",
+            }).encode("utf-8")
+            req = urllib.request.Request(GITHUB_API + "/repos/" + repo + "/releases",
+                                         data=payload, method="POST")
+            req.add_header("Content-Type", "application/json")
+            with api_request(req) as r:
+                release = json.loads(r.read().decode("utf-8"))
+
+        release_id = release["id"]
+
+        # 2) 同名资产先删掉（重复投稿 / 更正后重投）
+        for a in release.get("assets") or []:
+            if a.get("name") == name:
+                api_request(urllib.request.Request(
+                    GITHUB_API + "/repos/" + repo + "/releases/assets/" + str(a["id"]), method="DELETE"))
+                print("已删除同名旧资产：" + name, flush=True)
+
+        # 3) 传资产。用文件对象流式上传（显式给 Content-Length），
+        #    不要把 2 GB 读进内存 —— 下载那边就是这么写的。
+        query = "?name=" + urllib.parse.quote(name) + "&label=" + urllib.parse.quote(label)
+        with open(info["path"], "rb") as fh:
+            upload = urllib.request.Request(
+                GITHUB_UPLOAD + "/repos/" + repo + "/releases/" + str(release_id) + "/assets" + query,
+                data=fh, method="POST")
+            upload.add_header("Content-Type", "video/mp4")
+            upload.add_header("Content-Length", str(info["bytes"]))
+            with api_request(upload, timeout=1800) as r:
+                asset = json.loads(r.read().decode("utf-8"))
+
+        url = asset.get("browser_download_url")
+        print("HOSTED: " + str(url) + "（原链接 " + source_url + "）", flush=True)
+        return url or None
+    except Exception as e:
+        print("代管失败（不影响上架，video 仍指向原链接）：" + str(e), flush=True)
+        return None
+
 def main():
     body = os.environ.get("ISSUE_BODY", "")
     author = os.environ.get("ISSUE_USER", "unknown")
@@ -338,6 +437,11 @@ def main():
     entry_id = f"{author.lower()}__{slug}"
     tags = [t.strip() for t in re.split(r"[,，]", f.get("tags", "")) if t.strip()]
 
+    # ── 代管：把文件搬进社区仓库自己的 Release ──
+    # 投稿人不需要有仓库、不需要自己建 Release、也不需要长期稳定的链接。
+    hosted_url = rehost(entry_id, name, author, info, url)
+    video_url = hosted_url or url
+
     # 预览图由机器人从视频里截一帧，不让投稿者上传；截出来的图会随条目一起提交进仓库
     preview_url = ""
     shot = extract_preview(Path(info["path"]), entry_id, info["duration"])
@@ -351,7 +455,7 @@ def main():
         "id": entry_id,
         "name": name,
         "author": author,
-        "video": url,
+        "video": video_url,
         "sha256": info["sha256"],
         "bytes": info["bytes"],
         "width": info["width"],
@@ -365,6 +469,9 @@ def main():
     }
     if tags:
         entry["tags"] = tags
+    if hosted_url:
+        # 可选字段：记录原链接以便追溯（客户端不读它）
+        entry["source"] = url
     if not preview_url:
         print("警告：没能截出预览图，客户端会显示占位而不是封面")
 
@@ -434,7 +541,10 @@ def main():
         f"| 时长 | {info['duration']:.1f} 秒 |\n"
         f"| 体积 | {info['bytes'] / 1048576:.1f} MB |\n"
         f"| sha256 | `{info['sha256']}` |\n\n"
-        f"这些**都是你自己算的**，你不用填。",
+        f"这些**都是机器人自己算的**，你不用填。\n\n"
+        + (f"视频已由社区仓库**代为托管**（Release `{entry_id}`）—— 你不用管原来那个链接了。\n"
+           if hosted_url else
+           "视频仍指向你提供的链接：**请保持它长期有效**，否则条目会失效。\n"),
         encoding="utf-8",
     )
 

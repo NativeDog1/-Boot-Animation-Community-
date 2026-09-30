@@ -80,11 +80,11 @@ function ensureDialog() {
     'aria-label': '视频直链（可选）',
   });
   const linkField = el('div', { class: 'field', style: 'margin-top:10px' }, [
-    el('span', { class: 'field__label', text: '视频直链（可选 · 大于 25 MB 时用这条路）' }),
+    el('span', { class: 'field__label', text: '视频直链（可选 · 大于 25 MB 时贴这里）' }),
     linkInput,
     el('span', {
       class: 'field__hint',
-      text: '把视频上传到你自己的 GitHub Release，然后把那个文件的直链粘到这里 —— 点上面的按钮时我会把它一起填进投稿表单。没有仓库也可以用任何稳定的 https 直链。',
+      text: '贴一个能直接下载的 https 链接就行 —— 临时的也可以。机器人会把它搬进社区仓库长期托管，所以你的链接不需要长期有效，也不需要你有 GitHub 仓库。',
     }),
   ]);
 
@@ -113,7 +113,7 @@ function ensureDialog() {
       el('h3', { text: '3 · 去 GitHub 提交' }),
       el('p', {
         class: 'muted small',
-        text: '点下面的按钮打开投稿表单（名称已帮你预填）。≤ 25 MB 就在表单里把同一个文件拖进「视频」框；更大的文件请先传到自己的 Releases，再把直链粘到下面。',
+        text: '点下面的按钮打开投稿表单（名称已帮你预填）。≤ 25 MB 就在表单里把同一个文件拖进「视频」框；更大的文件把直链粘到下面，我会一起填进表单 —— 上传和托管都由机器人接手。',
       }),
       linkField,
       bigHint,
@@ -188,14 +188,14 @@ function ensureDialog() {
       if (!bigHint.hidden) {
         bigHint.replaceChildren(
           el('div', {}, [
-            el('b', { text: '这个文件超过 25 MB，不能直接拖进投稿表单。' }),
-            el('p', { class: 'small', style: 'margin:6px 0 0', text: 'GitHub 的 Issue 附件上限就是 25 MB。按下面两步走一次，以后同类大文件都这么投：' }),
-            el('ol', { class: 'small', style: 'margin:6px 0 0;padding-left:1.2em' }, [
-              el('li', { text: '把视频上传到你自己的某个 GitHub 仓库 Releases（单个文件最大 2 GB，免费）：仓库 → Releases → Draft a new release → 把 mp4 拖进附件区。' }),
-              el('li', { text: '复制那个文件的链接（形如 https://github.com/你/仓库/releases/download/v1/xxx.mp4），粘到上面的「视频直链」框里。' }),
+            el('b', { text: '这个文件超过 25 MB，GitHub 的表单装不下它。' }),
+            el('p', { class: 'small', style: 'margin:6px 0 0', text: '不用建仓库、也不用建 Release：随便找个能直接下载的地方把视频传上去，把直链粘到上面的「视频直链」框里就行。机器人会立刻把视频搬进社区仓库长期托管 —— 你那个链接只要在它下载的几分钟里有效就够了。' }),
+            el('p', { class: 'small', style: 'margin:6px 0 0', text: '手头一个直链都没有？两条路选一条：' }),
+            el('ul', { class: 'small', style: 'margin:6px 0 0;padding-left:1.2em' }, [
+              el('li', { text: '在你自己 GitHub 账号的任意仓库里建一个 Release（Releases → Draft a new release → 把 mp4 拖进附件区），复制它的链接 —— 单文件最大 2 GB，免费、永久。' }),
+              el('li', { text: '或者压一版 1440p（约 10 MB）直接拖进表单。这也是多数人真正会下载的版本。' }),
             ]),
-            el('p', { class: 'small', style: 'margin:6px 0 0', text: '没有自己的仓库也行，任何稳定的 https 直链都可以；网盘分享页不行（机器人要能直接下到文件本体）。' }),
-            el('p', { class: 'small', style: 'margin:6px 0 0', text: '💡 建议再单独投一版 1440p（约 10 MB）：客户端会自动断点续传，但大文件终究要等，而多数人只想要一个几秒就能装好的片头。' }),
+            el('p', { class: 'small', style: 'margin:6px 0 0', text: '4K 原画和 1440p 是两条独立投稿，互不影响 —— 先上 1440p、之后再补 4K 也完全可以。' }),
           ]),
         );
       }

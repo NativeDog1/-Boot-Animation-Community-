@@ -181,7 +181,7 @@ export const DOCS = [
     <tr><td>容器 / 编码</td><td>mp4，H.264 + AAC</td><td>Windows 自带解码器最稳，兼容性最好</td></tr>
     <tr><td>分辨率</td><td>2560×1440 为主</td><td>社区主流屏幕是 1440p；4K 单个几十 MB，下载明显更慢</td></tr>
     <tr><td>时长</td><td>5–10 秒</td><td>登录后超过 10 秒会让人等得烦</td></tr>
-    <tr><td>体积</td><td>≤ 30 MB 体验最好</td><td>用户会挑小的；超过 25 MB 就无法直接拖进投稿表单（要走 Releases 直链），硬上限 2 GB</td></tr>
+    <tr><td>体积</td><td>≤ 30 MB 体验最好</td><td>用户会挑小的；超过 25 MB 拖不进投稿表单，贴个直链就行（机器人会替你托管），硬上限 2 GB</td></tr>
     <tr><td>索引</td><td>必须 faststart</td><td>否则播放器要读完整个文件才出画面，表现为黑屏卡住</td></tr>
   </tbody>
 </table>
@@ -202,7 +202,7 @@ export const DOCS = [
 <ul>
   <li>本地算出 <code>sha256</code>（<strong>视频不会上传到我们这里</strong>）。</li>
   <li>读出分辨率、时长、体积，并从视频里抽一帧当预览。</li>
-  <li>按社区规范校验：体积超过 2 GB 或时长超过 30 秒会直接标为不合规；超过 25 MB（无法拖进表单）、超过 200 MB、超过 12 秒、或者本身是 4K，会给出提醒。</li>
+  <li>按社区规范校验：体积超过 2 GB 或时长超过 30 秒会直接标为不合规；超过 25 MB（拖不进表单，需要贴直链）、超过 200 MB、超过 12 秒、或者本身是 4K，会给出提醒。</li>
   <li>生成一份可直接粘进 GitHub 表单的元数据，以及带好参数的投稿链接。</li>
 </ul>
 <p>先让向导过一遍，能省掉一轮返工。</p>
@@ -235,9 +235,9 @@ export const DOCS = [
 
 <h2>视频放哪</h2>
 <dl class="facts">
-  <dt>推荐</dt><dd>自己仓库的 Releases，每个文件最大 2 GB，免费。直链形如 <code>https://github.com/&lt;你&gt;/&lt;仓库&gt;/releases/download/&lt;tag&gt;/&lt;文件&gt;.mp4</code></dd>
-  <dt>也可以</dt><dd>任何稳定的 https 直链：对象存储、你自己的 CDN</dd>
-  <dt>不合格</dt><dd>网盘分享页。客户端只认直链，不解析网页</dd>
+  <dt>最省事</dt><dd>≤ 25 MB 直接把文件拖进表单，链接由 GitHub 生成，你什么都不用管</dd>
+  <dt>大文件</dt><dd>贴<strong>任何能直接下载</strong>的 https 链接即可 —— 自己的 Releases、对象存储、网盘给的临时直链都行。<strong>机器人会立刻把它搬进社区仓库托管</strong>，所以你的链接不必长期有效</dd>
+  <dt>不合格</dt><dd>网盘分享页（要登录、要跳转的那种）。机器人只认直链，不解析网页</dd>
 </dl>
 
 <div class="callout callout--info">
@@ -247,19 +247,19 @@ export const DOCS = [
 </div>
 
 <h2>大文件（4K 原画等）怎么投</h2>
-<p>GitHub 的 <strong>Issue 附件上限是 25 MB</strong> —— 超过这个体积拖进表单会直接上传失败。所以按体积分两条路：</p>
+<p>GitHub 的 <strong>Issue 附件上限是 25 MB</strong>，所以按体积分两条路 —— <strong>两条都不需要你有仓库、也不需要建 Release</strong>：</p>
 <ol class="steps">
-  <li><b>≤ 25 MB</b><p class="muted small">直接把文件拖进投稿表单的「视频」框。GitHub 会自己托管它、自动把链接填好；sha256、字节数、分辨率、时长机器人都会自己算，你一个数字都不用填。</p></li>
-  <li><b>大于 25 MB（4K 原画等）</b><p class="muted small">先把视频上传到<strong>你自己某个仓库的 Releases</strong>（单个文件最大 2 GB，免费），再把那个文件的直链贴进表单的「视频」框。步骤：打开仓库 → 右侧 <strong>Releases</strong> → <em>Draft a new release</em> → Tag 随便填（比如 v1）→ 把 mp4 拖进附件区等它传完 → 复制文件链接，形如 <code>https://github.com/&lt;你&gt;/&lt;仓库&gt;/releases/download/v1/xxx.mp4</code>。</p></li>
+  <li><b>≤ 25 MB</b><p class="muted small">直接把文件拖进投稿表单的「视频」框。GitHub 会自己托管它、自动把链接填好；其余数字机器人都会自己算。</p></li>
+  <li><b>大于 25 MB</b><p class="muted small">把视频传到<strong>任何一个能直接下载的地方</strong>（自己的 Releases、对象存储、网盘给的临时直链都行），把链接粘进表单的「视频」框。<strong>机器人会立刻把视频搬进社区仓库的托管 Release 长期托管</strong>，所以你那个链接只要在它下载的那几分钟里有效就够了。</p></li>
 </ol>
 <div class="callout callout--info">
   <div>
-    <p>没有自己的仓库也行：任何<strong>稳定的 https 直链</strong>都可以（对象存储、你自己的 CDN）。但<strong>网盘分享页不行</strong> —— 机器人要能直接下载到文件本体，它不会去解析网页。</p>
+    <p>上架后目录里的 <code>video</code> 指向的是<strong>社区仓库自己的地址</strong>，不会因为你删掉文件、分享过期或网盘限速而失效。你给的原始链接会记在条目的可选字段 <code>source</code> 里便于追溯。</p>
   </div>
 </div>
 <div class="callout callout--warn">
   <div>
-    <p><strong>建议 4K 原画之外再单独投一版 1440p（约 10 MB）。</strong> 客户端下载支持断点续传（连接中断会自动接着下、不用从头再来），但大文件终究要等一会儿，而多数人只想要一个几秒钟就能装好的片头。两条投稿互不影响。</p>
+    <p><strong>建议 4K 原画之外再单独投一版 1440p（约 10 MB）。</strong> 客户端下载支持断点续传（连接中断会自动接着下、不用从头再来），但大文件终究要等一会儿，而多数人只想要一个几秒钟就能装好的片头。两条投稿互不影响，先上 1440p、之后再补 4K 也完全可以。</p>
   </div>
 </div>
 
@@ -267,7 +267,7 @@ export const DOCS = [
 <ul>
   <li><code>video</code> 和 <code>preview</code> 必须是 <strong>https 直链</strong>。</li>
   <li><code>sha256</code> 必须与文件完全一致 —— 这是唯一的安全校验手段，<strong>改了视频就必须改哈希</strong>。</li>
-  <li>体积上限 2 GB（对齐 GitHub Release 的单文件上限）、时长上限 30 秒；建议 1440p、30 MB 以内 —— 4K 原画请走 Releases 直链。</li>
+  <li>体积上限 2 GB（社区托管用的 Release 单文件上限）、时长上限 30 秒；建议 1440p、30 MB 以内 —— 4K 原画贴个直链就行，机器人会替你托管。</li>
   <li>投稿即表示你声明拥有该视频的权利或已获得授权，并在条目里写明 <code>license</code>（例如 CC-BY-4.0、CC0-1.0）。</li>
 </ul>
 
@@ -318,7 +318,7 @@ export const DOCS = [
 <ul>
   <li><strong>1440p（2560×1440）是社区主流</strong>，内置四段也是这个分辨率。</li>
   <li>4K 能跑，但单个文件常常几十 MB，下载明显更慢；社区建议投稿出 1440p。</li>
-  <li>建议体积 ≤ 30 MB；硬上限 2 GB（GitHub Release 的单文件上限）。注意：超过 25 MB 就没法直接拖进投稿表单，要先传到自己的 Release 再把直链贴进表单。</li>
+  <li>建议体积 ≤ 30 MB；硬上限 2 GB。注意：超过 25 MB 就没法直接拖进投稿表单 —— 这时把视频传到任何能直接下载的地方、把链接贴进表单即可，机器人会替你搬进社区仓库托管。</li>
 </ul>
 
 <h2>音频</h2>
