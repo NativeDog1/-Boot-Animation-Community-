@@ -263,6 +263,12 @@ export const DOCS = [
   </div>
 </div>
 
+<div class="callout callout--ok">
+  <div>
+    <p><strong>最省事的一条路：</strong>在站点的投稿向导里选好文件，点「切成附件分片」—— 它会用流式哈希算出校验值（多大的文件都不会卡）、把视频切成 20 MB 一块写进你选的文件夹，并把分片信息自动填进投稿表单。你只要把这些分片<strong>一起</strong>拖进表单即可：<strong>不需要仓库、不需要 Release、也不需要网盘</strong>。机器人拼回后会核对哈希，顺序错了或漏了分片都会明确告诉你。</p>
+  </div>
+</div>
+
 <h2>硬性要求（机器人会卡）</h2>
 <ul>
   <li><code>video</code> 和 <code>preview</code> 必须是 <strong>https 直链</strong>。</li>
