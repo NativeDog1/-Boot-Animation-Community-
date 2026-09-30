@@ -129,14 +129,24 @@ function shell(current, depth) {
   groups[0].items.push({ href: '', label: '首页' });
 
   // 归一化后再比：NAV 里是相对路径且**没有前导斜杠**（animations/），而分组表按页面目录写
-  // （/animations/）。第一次归一化只去了尾斜杠，不够；两边都要去头去尾才对得上。
+  // （/animations/）。两边都去头去尾才对得上。
+  //
+  // 注意空键：首页的 '/' 归一化后是空字符串，而**任何字符串都以空串开头** —— 第一版用
+  // startsWith 判断，结果 '/' 匹配了所有链接，六条全挤进 PRODUCT。所以空键只允许精确匹配，
+  // 前缀匹配按整段（'docs' 只吃 'docs/xxx'，不吃 'docsomething'）。
   const key = (h) => String(h).replace(/^\/+/, '').replace(/\/+$/, '');
+  const inGroup = (href, groupHref) => {
+    const k = key(groupHref);
+    const n = key(href);
+    if (k === '') return n === '';
+    return n === k || n.startsWith(k + '/');
+  };
 
   for (const n of NAV) {
     let placed = false;
     for (let i = 0; i < GROUPS.length; i += 1) {
       // DOCS 这一组要把 /docs/installation 之类的子页也收进去
-      if (GROUPS[i].hrefs.some((h) => key(n.href) === key(h) || (key(h) !== '/' && key(n.href).startsWith(key(h))))) {
+      if (GROUPS[i].hrefs.some((h) => inGroup(n.href, h))) {
         groups[i].items.push(n);
         used.add(n.href);
         placed = true;
