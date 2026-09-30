@@ -174,6 +174,7 @@ def download_with_resume(url, path, hasher=None, expected_bytes=None, label="文
         headers = {"User-Agent": "boot-anim-bot"}
         if total > 0:
             headers["Range"] = "bytes=%d-" % total
+        read_to_end = False
         try:
             req = urllib.request.Request(url, headers=headers)
             with urllib.request.urlopen(req, timeout=READ_TIMEOUT) as r:
@@ -211,6 +212,7 @@ def download_with_resume(url, path, hasher=None, expected_bytes=None, label="文
                         if hasher is not None:
                             hasher.update(chunk)
                         f.write(chunk)
+                read_to_end = True
         except SystemExit:
             raise
         except Exception as e:
@@ -218,11 +220,21 @@ def download_with_resume(url, path, hasher=None, expected_bytes=None, label="文
 
         if expected is not None and total >= expected:
             break
-        if expected is None:
-            break   # 服务器没给长度：这一轮读到底就算完成
+        # ⚠️ 必须区分「读到底了」和「这一轮抛异常了」：
+        # 曾经写成 `if expected is None: break`，结果首轮握手失败（SSL EOF）也会跳出循环，
+        # 文件压根没创建就去 stat，直接 FileNotFoundError；而且单文件路径下更糟 ——
+        # 断在半路会被当成"下载完成"，算出来的 sha256 描述的是残缺数据，
+        # 客户端下载完整文件后永远校验失败。
+        if expected is None and read_to_end:
+            break   # 服务器没给长度，但这一轮确实读到了 EOF
         if attempt < MAX_ATTEMPTS:
             time.sleep(2 * attempt)
 
+    if total == 0:
+        fail("%s：一个字节都没收到（多半是网络问题）。请重试；如果是直链，"
+             "换一个稳定的托管位置再投。" % label)
+    if expected is None:
+        print("%s：服务器没给 Content-Length，无法校验完整性（已读到底）。" % label, flush=True)
     if expected is not None and total != expected:
         fail("%s 下载不完整：服务器声明 %d 字节（约 %.1f MB），续传 %d 轮后只收到 %d 字节（约 %.1f MB）。"
              "这个直链本身不稳定 —— 建议改用 Releases 托管，或者用投稿向导把文件切成附件分片。"
