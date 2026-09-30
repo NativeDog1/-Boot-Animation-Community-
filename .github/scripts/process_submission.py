@@ -103,12 +103,18 @@ def probe_video(url: str):
     req = urllib.request.Request(url, headers={"User-Agent": "boot-anim-bot"})
     h = hashlib.sha256()
     total = 0
+    expected = None
     try:
         with urllib.request.urlopen(req, timeout=120) as r:
             ctype = (r.headers.get("content-type") or "").lower()
             if ctype.startswith("text/html"):
                 fail(f"这个链接返回的是网页而不是文件（{ctype}）。请确认它是视频直链，"
                      f"或者直接把视频文件拖进表单。")
+            try:
+                cl = r.headers.get("content-length")
+                expected = int(cl) if cl else None
+            except (TypeError, ValueError):
+                expected = None
             with tmp.open("wb") as f:
                 while True:
                     chunk = r.read(1 << 20)
@@ -124,6 +130,17 @@ def probe_video(url: str):
         raise
     except Exception as e:
         fail(f"下载不了这个地址：{e}")
+
+    # ⚠️ 必须校验完整性：网络中断时 urlopen 会"正常结束"，读到的却是个残缺文件。
+    # 不校验的话，算出来的 sha256 是**残缺数据的哈希** —— 客户端下载完整文件后
+    # 校验永远失败，而我们已经在目录里发布了一条坏条目。（这个坑实测踩到过。）
+    if expected is not None and total != expected:
+        fail(f"下载不完整：服务器声明 {expected} 字节（约 {expected / 1048576:.1f} MB），"
+             f"实际只收到 {total} 字节（约 {total / 1048576:.1f} MB）—— 网络中断了。"
+             f"如果是 GitHub Releases 上的大文件在国内下载不稳定，"
+             f"建议把视频压到 30 MB 以内（1440p）再投。")
+    if total < 100 * 1024:
+        fail(f"下载到的文件只有 {total} 字节，明显不是视频。")
 
     width = height = 0
     duration = 0.0

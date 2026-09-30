@@ -100,8 +100,10 @@
         链接会自动填好，你连 sha256 都不用算。
       </p>
       <p class="muted small" id="wizBigHint" hidden>
-        ⚠️ 你的文件偏大，GitHub 附件（约 25 MB 上限）可能装不下。
-        这种情况请把视频传到你自己仓库的 <code>Releases</code>，然后把直链贴进表单。
+        ⚠️ 文件超过 25 MB —— GitHub 的 Issue 附件装不下（实测：51 MB 的 4K 视频拖进表单会直接上传失败）。
+        这种文件必须走 <code>Releases</code>，把直链贴进表单。
+        <br>但请注意：<b>文件越大，用户下载越容易中途断掉</b> —— 实测 51.8 MB 的文件在国内只下到 26 MB 就断了。
+        所以强烈建议压到 <b>30 MB 以内（1440p 通常约 10 MB）</b>。
       </p>
       <div class="actions">
         <a class="btn primary" id="wizSubmit" href="#" target="_blank" rel="noopener">打开 GitHub 投稿表单</a>
