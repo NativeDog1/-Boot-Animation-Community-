@@ -99,6 +99,26 @@ function ensureDialog() {
     splitStatus,
   ]);
 
+  // ── 路线开关：文件超过 25 MB 时，拖不进表单，让用户明确二选一 ──
+  const routeSplitBtn = el('button', { class: 'chip', type: 'button', 'aria-pressed': 'true', text: '切成附件分片（不需要外部托管）' });
+  const routeLinkBtn = el('button', { class: 'chip', type: 'button', 'aria-pressed': 'false', text: '我贴一个链接（机器人代管）' });
+  const routeSwitch = el('div', { style: 'margin-top:12px', hidden: true }, [
+    el('span', { class: 'field__label', text: '文件超过 25 MB，选一种交给我' }),
+    el('div', { class: 'chips', style: 'margin-top:6px' }, [routeSplitBtn, routeLinkBtn]),
+  ]);
+
+  /** 切换"切分片 / 贴链接"两条路。默认切分片：它不需要任何外部托管。 */
+  function setRoute(route) {
+    const isSplit = route !== 'link';
+    if (state) state.route = isSplit ? 'split' : 'link';
+    splitField.hidden = !isSplit;
+    linkField.hidden = isSplit;
+    routeSplitBtn.setAttribute('aria-pressed', isSplit ? 'true' : 'false');
+    routeLinkBtn.setAttribute('aria-pressed', isSplit ? 'false' : 'true');
+  }
+  routeSplitBtn.addEventListener('click', () => setRoute('split'));
+  routeLinkBtn.addEventListener('click', () => setRoute('link'));
+
   const submitLink = el('a', { class: 'btn btn--primary', href: '#', target: '_blank', rel: 'noopener', 'aria-disabled': 'true' });
   submitLink.append(document.createTextNode('打开 GitHub 投稿表单'));
   submitLink.addEventListener('click', (e) => { if (submitLink.getAttribute('aria-disabled') === 'true') e.preventDefault(); });
@@ -126,6 +146,7 @@ function ensureDialog() {
         class: 'muted small',
         text: '点下面的按钮打开投稿表单（名称已帮你预填）。≤ 25 MB 就在表单里把同一个文件拖进「视频」框；更大的文件把直链粘到下面，我会一起填进表单 —— 上传和托管都由机器人接手。',
       }),
+      routeSwitch,
       linkField,
       bigHint,
       splitField,
@@ -237,7 +258,13 @@ function ensureDialog() {
   const SKIP_HASH_ABOVE = 64 * 1024 * 1024;
 
   async function handleFile(file) {
-    state = { fileName: file.name, name: file.name.replace(/\.[^.]+$/, ''), meta: null, partsManifest: '' };
+    state = {
+      fileName: file.name,
+      name: file.name.replace(/\.[^.]+$/, ''),
+      meta: null,
+      partsManifest: '',
+      route: (state && state.route) || 'split',   // 记住用户上次选的路线
+    };
     splitStatus.textContent = '';
     splitBtn.disabled = false;
     dropText.textContent = file.name;
@@ -264,18 +291,23 @@ function ensureDialog() {
       applySubmitUrl();
 
       const MB = 1024 * 1024;
-      bigHint.hidden = file.size <= 25 * MB;
-      splitField.hidden = file.size <= 25 * MB;
-      if (!bigHint.hidden) {
+      const tooBig = file.size > 25 * MB;
+      bigHint.hidden = !tooBig;
+      routeSwitch.hidden = !tooBig;
+      if (!tooBig) {
+        // 小文件：直接拖进表单最省事；链接框留着给"手上只有链接"的人
+        linkField.hidden = false;
+        splitField.hidden = true;
+      } else {
+        // 大文件：走开关选定的那条路（默认切分片）
+        setRoute(state.route || 'split');
+      }
+      if (tooBig) {
         bigHint.replaceChildren(
           el('div', {}, [
-            el('b', { text: '这个文件超过 25 MB，GitHub 的表单装不下它。' }),
-            el('p', { class: 'small', style: 'margin:6px 0 0', text: '最省事：点下面的「切成附件分片」—— 我把它切成 20 MB 一块，你把它们**一起**拖进表单就行。不需要仓库、不需要网盘，分片信息我会自动填进表单，你不用手抄。' }),
-            el('p', { class: 'small', style: 'margin:6px 0 0', text: '也可以走另外两条路（收益一样，看你方便）：' }),
-            el('ul', { class: 'small', style: 'margin:6px 0 0;padding-left:1.2em' }, [
-              el('li', { text: '贴一个能直接下载的 https 链接（临时的也行，机器人会立刻把视频搬进社区仓库长期托管）。' }),
-              el('li', { text: '压一版 1440p（约 10 MB）直接拖进表单 —— 那也是多数人真正会下载的版本。' }),
-            ]),
+            el('b', { text: '这个文件超过 25 MB，GitHub 的表单装不下它 —— 上面两条路选一条即可，都不需要你有仓库或 Release。' }),
+            el('p', { class: 'small', style: 'margin:6px 0 0', text: '「切成附件分片」：我把它切成 20 MB 一块写进你选的文件夹，你把它们一起拖进表单就行；分片信息自动填好，机器人拼回后核对哈希。' }),
+            el('p', { class: 'small', style: 'margin:6px 0 0', text: '「我贴一个链接」：把视频放到任何能直接下载的地方（自己的 Releases、对象存储、网盘给的临时直链都行），把链接粘进下面的框 —— 机器人会立刻把它搬进社区仓库长期托管，所以那个链接只需要在它下载的几分钟里有效。' }),
           ]),
         );
       }
