@@ -198,16 +198,30 @@ test('suggestSlug：保守替换，中文标题留空让用户自己填', () => 
 
 /* ───────────────────────── 投稿准入 ───────────────────────── */
 
-test('validateLocalFile：阈值与 SCHEMA 一致（100MB / 30s / 4K）', () => {
+test('validateLocalFile：阈值与 SCHEMA / 机器人一致（2 GB / 30 s / 4K）', () => {
   const ok = validateLocalFile({ bytes: 10 * 1024 * 1024, duration: 7, width: 2560, height: 1440 });
   assert.equal(ok.ok, true);
   assert.deepEqual(ok.issues, []);
   assert.deepEqual(ok.warn, []);
 
-  assert.equal(validateLocalFile({ bytes: 101 * 1024 * 1024, duration: 7, width: 1920, height: 1080 }).ok, false);
+  const MB = 1024 * 1024;
+  // 硬上限对齐 GitHub Release 单文件上限：4K 原画不该被拦
+  assert.equal(validateLocalFile({ bytes: 500 * MB, duration: 7, width: 3840, height: 2160 }).ok, true);
+  assert.equal(validateLocalFile({ bytes: 2001 * MB, duration: 7, width: 1920, height: 1080 }).ok, false);
   assert.equal(validateLocalFile({ bytes: 1024, duration: 31, width: 1920, height: 1080 }).ok, false);
   assert.equal(validateLocalFile({ bytes: 1024, duration: 7, width: 4000, height: 4000 }).ok, false);
   assert.equal(validateLocalFile({ bytes: 0, duration: 7, width: 1920, height: 1080 }).ok, false);
+});
+
+test('validateLocalFile：超过 25 MB 要提醒"不能直接拖进表单"', () => {
+  const MB = 1024 * 1024;
+  const over = validateLocalFile({ bytes: 40 * MB, duration: 7, width: 1920, height: 1080 });
+  assert.equal(over.ok, true);
+  assert.equal(over.warn.some((w) => w.includes('25 MB')), true);
+
+  const huge = validateLocalFile({ bytes: 300 * MB, duration: 7, width: 3840, height: 2160 });
+  assert.equal(huge.ok, true);
+  assert.equal(huge.warn.some((w) => w.includes('断点续传')), true);
 });
 
 test('validateLocalFile：超限但是警告的情况要放行', () => {

@@ -1,5 +1,5 @@
 name: 投稿开机动画
-description: 把视频拖进来就行，其余交给机器人
+description: 拖文件进来就行；大于 25 MB 的走 Releases 直链，其余交给机器人
 title: "[投稿] "
 labels:
   - submission
@@ -7,18 +7,32 @@ body:
   - type: markdown
     attributes:
       value: |
-        ### 你只需要做一件事：把视频文件拖进下面的「视频」框
+        ### 两种方式，按文件大小选一种
 
-        拖进去之后 GitHub 会自己上传它、自动把链接填好。**sha256、字节数、分辨率、时长，机器人会自己算** —— 你一个数字都不用填。
+        **① 视频 ≤ 25 MB** —— 直接把文件拖进下面的「视频」框。GitHub 会自己上传它、
+        自动把链接填好。**sha256、字节数、分辨率、时长机器人都会自己算**，你一个数字都不用填。
 
-        也可以贴一个 https 直链（例如你自己仓库 Releases 里的地址）。投稿规范见 [README](https://github.com/NativeDog1/-Boot-Animation-Community-/blob/main/README.md)。
+        **② 视频 > 25 MB（4K 原画等）** —— GitHub 的 Issue 附件上限就是 25 MB，拖进来会直接
+        上传失败。这种情况先把视频传到你**自己仓库的 Releases**，再把直链粘进「视频」框：
+
+        1. 打开你自己的某个仓库 → 右侧 **Releases** → *Draft a new release*
+        2. Tag 随便填（比如 `v1`），把 mp4 拖进附件区等它传完（单个文件最大 **2 GB**，免费）
+        3. 传完后复制那个文件的链接，形如
+           `https://github.com/<你>/<仓库>/releases/download/v1/xxx.mp4`，粘到下面「视频」框里
+
+        没有自己的仓库也可以：任何**稳定的 https 直链**都行（对象存储、你自己的 CDN）。
+        但**网盘分享页不行** —— 机器人要能直接下载到文件本体，它不会去解析网页。
+
+        > 💡 **建议：4K 原画之外再单独投一版 1440p（约 10 MB）**。
+        > 大文件下载慢（客户端虽然会自动断点续传），而多数人只想要一个几秒钟就能装好的片头。
+        > 一版原画给追求画质的人，一版 1440p 给大多数人 —— 两条投稿互不影响。
 
   - type: textarea
     id: video
     attributes:
       label: 视频
-      description: 把 mp4 拖进这个框（推荐），或粘贴 https 直链
-      placeholder: 把视频文件拖到这里…
+      description: ≤ 25 MB 就把 mp4 拖进这个框；更大的请传到自己仓库的 Releases，再把直链粘进来
+      placeholder: 把视频文件拖到这里…（或粘贴 https 直链）
     validations:
       required: true
 

@@ -181,7 +181,7 @@ export const DOCS = [
     <tr><td>容器 / 编码</td><td>mp4，H.264 + AAC</td><td>Windows 自带解码器最稳，兼容性最好</td></tr>
     <tr><td>分辨率</td><td>2560×1440 为主</td><td>社区主流屏幕是 1440p；4K 单个几十 MB，下载明显更慢</td></tr>
     <tr><td>时长</td><td>5–10 秒</td><td>登录后超过 10 秒会让人等得烦</td></tr>
-    <tr><td>体积</td><td>≤ 30 MB 最佳</td><td>用户会挑小的；社区硬上限是 100 MB</td></tr>
+    <tr><td>体积</td><td>≤ 30 MB 体验最好</td><td>用户会挑小的；超过 25 MB 就无法直接拖进投稿表单（要走 Releases 直链），硬上限 2 GB</td></tr>
     <tr><td>索引</td><td>必须 faststart</td><td>否则播放器要读完整个文件才出画面，表现为黑屏卡住</td></tr>
   </tbody>
 </table>
@@ -202,7 +202,7 @@ export const DOCS = [
 <ul>
   <li>本地算出 <code>sha256</code>（<strong>视频不会上传到我们这里</strong>）。</li>
   <li>读出分辨率、时长、体积，并从视频里抽一帧当预览。</li>
-  <li>按社区规范校验：体积超过 100 MB 或时长超过 30 秒会直接标为不合规；超过 30 MB、超过 12 秒、或者本身是 4K，会给出提醒。</li>
+  <li>按社区规范校验：体积超过 2 GB 或时长超过 30 秒会直接标为不合规；超过 25 MB（无法拖进表单）、超过 200 MB、超过 12 秒、或者本身是 4K，会给出提醒。</li>
   <li>生成一份可直接粘进 GitHub 表单的元数据，以及带好参数的投稿链接。</li>
 </ul>
 <p>先让向导过一遍，能省掉一轮返工。</p>
@@ -250,7 +250,7 @@ export const DOCS = [
 <ul>
   <li><code>video</code> 和 <code>preview</code> 必须是 <strong>https 直链</strong>。</li>
   <li><code>sha256</code> 必须与文件完全一致 —— 这是唯一的安全校验手段，<strong>改了视频就必须改哈希</strong>。</li>
-  <li>体积上限 100 MB、时长上限 30 秒；社区建议 1440p、30 MB 以内。</li>
+  <li>体积上限 2 GB（对齐 GitHub Release 的单文件上限）、时长上限 30 秒；建议 1440p、30 MB 以内 —— 4K 原画请走 Releases 直链。</li>
   <li>投稿即表示你声明拥有该视频的权利或已获得授权，并在条目里写明 <code>license</code>（例如 CC-BY-4.0、CC0-1.0）。</li>
 </ul>
 
@@ -301,7 +301,7 @@ export const DOCS = [
 <ul>
   <li><strong>1440p（2560×1440）是社区主流</strong>，内置四段也是这个分辨率。</li>
   <li>4K 能跑，但单个文件常常几十 MB，下载明显更慢；社区建议投稿出 1440p。</li>
-  <li>建议体积 ≤ 30 MB。社区硬上限 100 MB，超过会被机器人拒绝。</li>
+  <li>建议体积 ≤ 30 MB；硬上限 2 GB（GitHub Release 的单文件上限）。注意：超过 25 MB 就没法直接拖进投稿表单，要先传到自己的 Release 再把直链贴进表单。</li>
 </ul>
 
 <h2>音频</h2>

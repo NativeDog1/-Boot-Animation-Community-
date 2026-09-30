@@ -274,7 +274,10 @@ export function suggestSlug(name) {
 
 /**
  * 本地文件的准入检查。返回 { ok, issues[], warn[] }。
- * 纯函数，方便测试；规则与 SCHEMA.md 保持一致。
+ * 纯函数，方便测试；**阈值与机器人和 SCHEMA.md 必须一致**。
+ *
+ * 关于大文件：上限 2 GB 是对齐 GitHub Release 的单文件上限 —— 那也是大文件唯一
+ * 免费的托管路径。所以这里不拦 4K 原画，只提醒"下载体验"和"体积"。
  */
 export function validateLocalFile(meta) {
   const issues = [];
@@ -284,16 +287,20 @@ export function validateLocalFile(meta) {
   const width = Number(meta.width || 0);
   const height = Number(meta.height || 0);
 
+  const MAX_GB_LIMIT = 2000 * 1024 * 1024;   // GitHub Release 单文件上限
+  const WARN_LIMIT = 200 * 1024 * 1024;
+
   if (!bytes) issues.push('读不到文件大小');
-  else if (bytes > 100 * 1024 * 1024) issues.push(`文件 ${formatBytes(bytes)}，超过社区上限 100 MB（4K 单个太大，建议出 1440p）`);
-  else if (bytes > 30 * 1024 * 1024) warn.push(`文件 ${formatBytes(bytes)}，偏大 —— 用户下载会慢，建议压到 30 MB 以内`);
+  else if (bytes > MAX_GB_LIMIT) issues.push(`文件 ${formatBytes(bytes)}，超过 2 GB —— 这是 GitHub Release 的单文件上限，也是免费方案能支撑的极限`);
+  else if (bytes > WARN_LIMIT) warn.push(`文件 ${formatBytes(bytes)}，下载会很久（虽然客户端支持断点续传）。建议同时再提供一版 1440p（约 10 MB）单独投稿`);
+  else if (bytes > 30 * 1024 * 1024) warn.push(`文件 ${formatBytes(bytes)}，偏大 —— 超过 25 MB 就不能直接拖进投稿表单了，需要先把视频传到你自己的 GitHub Release，再把直链贴进表单`);
 
   if (duration && duration > 30) issues.push(`时长 ${duration.toFixed(1)} 秒，超过上限 30 秒（开机动画建议 5–10 秒）`);
   else if (duration && duration > 12) warn.push(`时长 ${duration.toFixed(1)} 秒，偏长 —— 开机动画超过 10 秒容易让人烦`);
 
   if (width && height) {
     if (width > 3840 || height > 3840) issues.push(`${width}×${height} 超过 4K，没必要`);
-    else if (height >= 2160) warn.push('是 4K 素材 —— 能通过，但单个文件大、下载慢，社区主流是 1440p');
+    else if (height >= 2160) warn.push('是 4K 素材 —— 能通过，体积也会明显更大；建议同时提供一版 1440p');
   } else {
     warn.push('读不到分辨率，确认一下是不是标准 mp4');
   }

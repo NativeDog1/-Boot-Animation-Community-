@@ -69,7 +69,24 @@ function ensureDialog() {
   const result = el('div', { id: 'ba-wiz-result', style: 'margin-top:12px' }, [
     el('p', { class: 'muted small', text: '还没选文件。' }),
   ]);
-  const bigHint = el('p', { class: 'muted small', hidden: true });
+  // 大文件（尤其是 4K 原画）的专用提示：> 25 MB 就没法拖进 Issue 表单了
+  const bigHint = el('div', { class: 'callout callout--warn', hidden: true, style: 'margin-top:12px' });
+
+  // 直链输入：把视频传到自己仓库的 Release 之后，把链接粘这里，表单会自动带上
+  const linkInput = el('input', {
+    class: 'input',
+    type: 'url',
+    placeholder: 'https://github.com/你/仓库/releases/download/v1/xxx.mp4',
+    'aria-label': '视频直链（可选）',
+  });
+  const linkField = el('div', { class: 'field', style: 'margin-top:10px' }, [
+    el('span', { class: 'field__label', text: '视频直链（可选 · 大于 25 MB 时用这条路）' }),
+    linkInput,
+    el('span', {
+      class: 'field__hint',
+      text: '把视频上传到你自己的 GitHub Release，然后把那个文件的直链粘到这里 —— 点上面的按钮时我会把它一起填进投稿表单。没有仓库也可以用任何稳定的 https 直链。',
+    }),
+  ]);
 
   const submitLink = el('a', { class: 'btn btn--primary', href: '#', target: '_blank', rel: 'noopener', 'aria-disabled': 'true' });
   submitLink.append(document.createTextNode('打开 GitHub 投稿表单'));
@@ -84,7 +101,7 @@ function ensureDialog() {
       '分辨率：' + (m.width ? m.width + '×' + m.height : '—'),
       '时长：' + (m.duration ? m.duration.toFixed(2) + ' 秒' : '—'),
       '体积：' + m.bytes + ' 字节',
-      'sha256：' + m.sha256,
+      'sha256：' + (m.sha256 || '（文件较大，未在浏览器端计算）'),
     ].join('\n');
     toast(await copyText(text) ? '已复制，粘贴到 GitHub 表单里就行' : '复制失败，请手动选中复制', 'err');
   });
@@ -96,8 +113,9 @@ function ensureDialog() {
       el('h3', { text: '3 · 去 GitHub 提交' }),
       el('p', {
         class: 'muted small',
-        text: '点下面的按钮打开投稿表单（名称已帮你预填）。然后在表单里把同一个视频文件直接拖进「视频」那个文本框 —— GitHub 会自己托管它，链接会自动填好，你连 sha256 都不用算。',
+        text: '点下面的按钮打开投稿表单（名称已帮你预填）。≤ 25 MB 就在表单里把同一个文件拖进「视频」框；更大的文件请先传到自己的 Releases，再把直链粘到下面。',
       }),
+      linkField,
       bigHint,
       el('div', { class: 'btn-row' }, [submitLink, copyBtn]),
     ]),
@@ -107,40 +125,79 @@ function ensureDialog() {
   document.body.append(dialog);
   dialog.addEventListener('close', () => { if (drop) drop.style.borderColor = 'var(--line-strong)'; });
 
+  /** 依当前状态（名称 + 直链）重算投稿表单地址。 */
+  function applySubmitUrl() {
+    const link = (linkInput.value || '').trim();
+    const linkOk = !link || /^https:\/\/\S+$/i.test(link);
+    const name = (state && state.name) || '';
+    submitLink.href = linkOk
+      ? submitIssueUrl({
+        name,
+        slug: suggestSlug(name) || 'my-animation',
+        video: link,
+        license: '',
+        nsfw: 'false',
+        tags: '',
+        description: '',
+      })
+      : '#';
+    submitLink.setAttribute('aria-disabled', linkOk ? 'false' : 'true');
+    if (!linkOk) {
+      linkInput.style.borderColor = 'var(--danger)';
+      linkInput.title = '要以 https:// 开头的直链（网盘分享页不行）';
+    } else {
+      linkInput.style.borderColor = '';
+      linkInput.title = '';
+    }
+  }
+  linkInput.addEventListener('input', applySubmitUrl);
+  applySubmitUrl();   // 打开向导时先给一个有效地址，用户点「打开表单」总能到地方
+
+  /* 超过这个体积就不在浏览器里算 sha256 了：WebCrypto 要把整个文件读进内存，
+     几百 MB 会直接把标签页拖死甚至崩掉。机器人本来就会自己下载后重算，所以
+     跳过它不影响上架 —— 只是"我帮你算好了"这个便利在大文件上让位给"别把浏览器搞崩"。 */
+  const SKIP_HASH_ABOVE = 64 * 1024 * 1024;
+
   async function handleFile(file) {
     state = { fileName: file.name, name: file.name.replace(/\.[^.]+$/, ''), meta: null };
     dropText.textContent = file.name;
     progress.hidden = false;
     progress.textContent = `读取 ${file.name} …`;
     clear(result);
-    result.append(el('p', { class: 'muted small', text: '正在读取元数据并计算 sha256（大文件要几秒）…' }));
+    result.append(el('p', { class: 'muted small', text: '正在读取元数据…' }));
 
     try {
       const meta = await readVideoMeta(file);
-      const sha256 = await sha256OfFile(file);
-      const merged = { ...meta, sha256, bytes: file.size };
+      const skipHash = file.size > SKIP_HASH_ABOVE;
+      let sha256 = '';
+      if (!skipHash) {
+        try { sha256 = await sha256OfFile(file); } catch { sha256 = ''; }
+      }
+      const merged = { ...meta, sha256, bytes: file.size, hashSkipped: skipHash };
       state.meta = merged;
       progress.hidden = true;
 
       const check = validateLocalFile({ ...meta, bytes: file.size });
       renderResult(merged, check);
 
-      const slug = suggestSlug(state.name) || 'my-animation';
-      submitLink.href = submitIssueUrl({
-        name: state.name,
-        slug,
-        video: '',
-        license: '',
-        nsfw: 'false',
-        tags: '',
-        description: '',
-      });
-      submitLink.setAttribute('aria-disabled', 'false');
       copyBtn.disabled = false;
+      applySubmitUrl();
 
-      bigHint.hidden = file.size <= 25 * 1024 * 1024;
+      const MB = 1024 * 1024;
+      bigHint.hidden = file.size <= 25 * MB;
       if (!bigHint.hidden) {
-        bigHint.textContent = '⚠️ 文件超过 25 MB —— GitHub 的 Issue 附件装不下。这种文件必须走 Releases，把直链贴进表单。文件越大，用户下载越容易中途断掉，建议压到 30 MB 以内（1440p 通常约 10 MB）。';
+        bigHint.replaceChildren(
+          el('div', {}, [
+            el('b', { text: '这个文件超过 25 MB，不能直接拖进投稿表单。' }),
+            el('p', { class: 'small', style: 'margin:6px 0 0', text: 'GitHub 的 Issue 附件上限就是 25 MB。按下面两步走一次，以后同类大文件都这么投：' }),
+            el('ol', { class: 'small', style: 'margin:6px 0 0;padding-left:1.2em' }, [
+              el('li', { text: '把视频上传到你自己的某个 GitHub 仓库 Releases（单个文件最大 2 GB，免费）：仓库 → Releases → Draft a new release → 把 mp4 拖进附件区。' }),
+              el('li', { text: '复制那个文件的链接（形如 https://github.com/你/仓库/releases/download/v1/xxx.mp4），粘到上面的「视频直链」框里。' }),
+            ]),
+            el('p', { class: 'small', style: 'margin:6px 0 0', text: '没有自己的仓库也行，任何稳定的 https 直链都可以；网盘分享页不行（机器人要能直接下到文件本体）。' }),
+            el('p', { class: 'small', style: 'margin:6px 0 0', text: '💡 建议再单独投一版 1440p（约 10 MB）：客户端会自动断点续传，但大文件终究要等，而多数人只想要一个几秒就能装好的片头。' }),
+          ]),
+        );
       }
     } catch (error) {
       progress.hidden = true;
@@ -173,7 +230,7 @@ function ensureDialog() {
       ['分辨率', meta.width ? `${meta.width}×${meta.height}` : '—'],
       ['时长', meta.duration ? formatDuration(meta.duration) : '—'],
       ['体积', formatBytes(meta.bytes)],
-      ['sha256', meta.sha256],
+      ['sha256', meta.sha256 || '文件较大，浏览器端跳过 —— 机器人下载后会自己算'],
     ];
     for (const [k, v] of rows) {
       facts.append(el('dt', { text: k }));

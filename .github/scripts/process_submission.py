@@ -19,6 +19,7 @@ import re
 import subprocess
 import sys
 import tempfile
+import time
 import urllib.request
 from datetime import date
 from pathlib import Path
@@ -34,8 +35,18 @@ HEX64 = re.compile(r"^[0-9a-f]{64}$")
 RES = re.compile(r"^(\d{2,5})\s*[x×]\s*(\d{2,5})$")
 VIDEO_EXT = re.compile(r"\.(mp4|mov|m4v|webm)(\?|$)", re.I)
 
-MAX_BYTES = 100 * 1024 * 1024
+# 单个文件上限：对齐 GitHub Release 附件的每文件上限（2 GB）—— 大文件唯一免费的
+# 托管路径就是 Releases，硬上限不该比它更低。真正的门槛在提交者那边：Issue 附件只有
+# 25 MB，超过就必须走 Releases 直链（见 .github/ISSUE_TEMPLATE/submit-animation.yml）。
+MAX_BYTES = 2000 * 1024 * 1024
+# 超过这个体积只是提醒，不算失败：4K 原画本来就这么大。
+WARN_BYTES = 200 * 1024 * 1024
 MAX_DURATION = 30.0
+# 1 MB 一块；单次读超时 5 分钟（大文件在慢链路上很容易超过原来那 2 分钟）；
+# 断线最多续传 4 轮 —— 断一次就整条投稿失败，对大文件是不可接受的。
+CHUNK = 1 << 20
+READ_TIMEOUT = 300
+MAX_ATTEMPTS = 4
 
 # 表单标题 → 内部字段名（表单里只保留这几项，其余靠推导）
 FIELDS = {
@@ -100,45 +111,72 @@ def probe_video(url: str):
     """下载视频并量出它的一切。机器能算的，绝不问用户。
     返回 dict(sha256, bytes, width, height, duration, filename)。"""
     tmp = Path(tempfile.mkdtemp()) / "submission.mp4"
-    req = urllib.request.Request(url, headers={"User-Agent": "boot-anim-bot"})
     h = hashlib.sha256()
     total = 0
     expected = None
-    try:
-        with urllib.request.urlopen(req, timeout=120) as r:
-            ctype = (r.headers.get("content-type") or "").lower()
-            if ctype.startswith("text/html"):
-                fail(f"这个链接返回的是网页而不是文件（{ctype}）。请确认它是视频直链，"
-                     f"或者直接把视频文件拖进表单。")
-            try:
-                cl = r.headers.get("content-length")
-                expected = int(cl) if cl else None
-            except (TypeError, ValueError):
-                expected = None
-            with tmp.open("wb") as f:
-                while True:
-                    chunk = r.read(1 << 20)
-                    if not chunk:
-                        break
-                    total += len(chunk)
-                    if total > MAX_BYTES:
-                        fail(f"文件超过 {MAX_BYTES // 1024 // 1024} MB（已读 {total // 1024 // 1024} MB 就超了）。"
-                             f"社区建议 1440p、30 MB 以内。")
-                    h.update(chunk)
-                    f.write(chunk)
-    except SystemExit:
-        raise
-    except Exception as e:
-        fail(f"下载不了这个地址：{e}")
+
+    # 大文件必须能续传。100 MB 以上的直链在国内经常中途断流，而 urlopen 遇到中断是
+    # "正常结束" —— 不重试的话，投稿人只会看到一条莫名其妙的失败。
+    # 做法与客户端一致：记住已收字节，用 Range 接着下，最多 MAX_ATTEMPTS 轮。
+    for attempt in range(1, MAX_ATTEMPTS + 1):
+        headers = {"User-Agent": "boot-anim-bot"}
+        if total > 0:
+            headers["Range"] = "bytes=%d-" % total
+        try:
+            req = urllib.request.Request(url, headers=headers)
+            with urllib.request.urlopen(req, timeout=READ_TIMEOUT) as r:
+                ctype = (r.headers.get("content-type") or "").lower()
+                if ctype.startswith("text/html"):
+                    fail("这个链接返回的是网页而不是文件（%s）。请确认它是视频直链，"
+                         "或者直接把视频文件拖进表单。" % ctype)
+
+                status = getattr(r, "status", 200)
+                if total > 0 and status != 206:
+                    # 服务器不支持 Range（返回 200 全量）：只能从头来，别把两段拼一起
+                    print("服务器不支持续传（HTTP %s），从头下载" % status, flush=True)
+                    total = 0
+                    h = hashlib.sha256()
+
+                if expected is None:
+                    try:
+                        cl = r.headers.get("content-length")
+                        expected = (total + int(cl)) if cl else None
+                    except (TypeError, ValueError):
+                        expected = None
+
+                with tmp.open("ab" if total > 0 else "wb") as f:
+                    while True:
+                        chunk = r.read(CHUNK)
+                        if not chunk:
+                            break
+                        total += len(chunk)
+                        if total > MAX_BYTES:
+                            fail("文件超过 %d MB（已读 %d MB 就超了）。这是 GitHub Release "
+                                 "的单文件上限，也是免费方案能支撑的极限 —— 请压缩，"
+                                 "或同时提供一版 1440p。"
+                                 % (MAX_BYTES // 1024 // 1024, total // 1024 // 1024))
+                        h.update(chunk)
+                        f.write(chunk)
+        except SystemExit:
+            raise
+        except Exception as e:
+            print("第 %d 轮下载中断：%s" % (attempt, e), flush=True)
+
+        if expected is not None and total >= expected:
+            break
+        if expected is None:
+            break   # 服务器没给长度：这一轮读到底就算完成
+        if attempt < MAX_ATTEMPTS:
+            time.sleep(2 * attempt)
 
     # ⚠️ 必须校验完整性：网络中断时 urlopen 会"正常结束"，读到的却是个残缺文件。
-    # 不校验的话，算出来的 sha256 是**残缺数据的哈希** —— 客户端下载完整文件后
-    # 校验永远失败，而我们已经在目录里发布了一条坏条目。（这个坑实测踩到过。）
+    # 不校验的话，算出来的 sha256 是**残缺数据的哈希** —— 客户端下载完整文件后校验
+    # 永远失败，而我们已经在目录里发布了一条坏条目。（这个坑实测踩到过。）
     if expected is not None and total != expected:
-        fail(f"下载不完整：服务器声明 {expected} 字节（约 {expected / 1048576:.1f} MB），"
-             f"实际只收到 {total} 字节（约 {total / 1048576:.1f} MB）—— 网络中断了。"
-             f"如果是 GitHub Releases 上的大文件在国内下载不稳定，"
-             f"建议把视频压到 30 MB 以内（1440p）再投。")
+        fail("下载不完整：服务器声明 %d 字节（约 %.1f MB），续传 %d 轮后只收到 %d 字节"
+             "（约 %.1f MB）。这个直链本身不稳定 —— 建议改用 GitHub Releases 托管："
+             "把同一个文件上传到你自己的仓库 Release，再把 releases/download 直链贴进来。"
+             % (expected, expected / 1048576, MAX_ATTEMPTS, total, total / 1048576))
     if total < 100 * 1024:
         fail(f"下载到的文件只有 {total} 字节，明显不是视频。")
 
