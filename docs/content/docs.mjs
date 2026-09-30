@@ -246,6 +246,23 @@ export const DOCS = [
   </div>
 </div>
 
+<h2>大文件（4K 原画等）怎么投</h2>
+<p>GitHub 的 <strong>Issue 附件上限是 25 MB</strong> —— 超过这个体积拖进表单会直接上传失败。所以按体积分两条路：</p>
+<ol class="steps">
+  <li><b>≤ 25 MB</b><p class="muted small">直接把文件拖进投稿表单的「视频」框。GitHub 会自己托管它、自动把链接填好；sha256、字节数、分辨率、时长机器人都会自己算，你一个数字都不用填。</p></li>
+  <li><b>大于 25 MB（4K 原画等）</b><p class="muted small">先把视频上传到<strong>你自己某个仓库的 Releases</strong>（单个文件最大 2 GB，免费），再把那个文件的直链贴进表单的「视频」框。步骤：打开仓库 → 右侧 <strong>Releases</strong> → <em>Draft a new release</em> → Tag 随便填（比如 v1）→ 把 mp4 拖进附件区等它传完 → 复制文件链接，形如 <code>https://github.com/&lt;你&gt;/&lt;仓库&gt;/releases/download/v1/xxx.mp4</code>。</p></li>
+</ol>
+<div class="callout callout--info">
+  <div>
+    <p>没有自己的仓库也行：任何<strong>稳定的 https 直链</strong>都可以（对象存储、你自己的 CDN）。但<strong>网盘分享页不行</strong> —— 机器人要能直接下载到文件本体，它不会去解析网页。</p>
+  </div>
+</div>
+<div class="callout callout--warn">
+  <div>
+    <p><strong>建议 4K 原画之外再单独投一版 1440p（约 10 MB）。</strong> 客户端下载支持断点续传（连接中断会自动接着下、不用从头再来），但大文件终究要等一会儿，而多数人只想要一个几秒钟就能装好的片头。两条投稿互不影响。</p>
+  </div>
+</div>
+
 <h2>硬性要求（机器人会卡）</h2>
 <ul>
   <li><code>video</code> 和 <code>preview</code> 必须是 <strong>https 直链</strong>。</li>
