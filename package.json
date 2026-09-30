@@ -6,8 +6,8 @@
   "scripts": {
     "build": "node tools/build-site.mjs",
     "verify": "node tools/verify-site.mjs",
-    "test": "node --test tools/catalog.test.mjs",
-    "check": "node tools/build-site.mjs && node tools/verify-site.mjs && node --test tools/catalog.test.mjs",
+    "test": "node --test tools/catalog.test.mjs tools/split.test.mjs tools/sha256.test.mjs",
+    "check": "node tools/build-site.mjs && node tools/verify-site.mjs && node --test tools/catalog.test.mjs tools/split.test.mjs tools/sha256.test.mjs",
     "serve": "node docs/serve.mjs"
   },
   "engines": {
