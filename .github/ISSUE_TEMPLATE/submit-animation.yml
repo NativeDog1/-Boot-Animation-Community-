@@ -30,6 +30,13 @@ body:
       required: true
 
   - type: input
+    id: parts
+    attributes:
+      label: 分片信息
+      description: 用投稿向导切分片时会自动填好。手拖多个分片时**必须**有它 —— 机器人靠它知道该拼几片、拼完应该是什么哈希
+      placeholder: ba-parts:v1;name=xxx.mp4;bytes=…;parts=…;partbytes=…;sha256=…
+
+  - type: input
     id: name
     attributes:
       label: 名称

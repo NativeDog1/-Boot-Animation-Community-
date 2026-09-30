@@ -1,4 +1,4 @@
-"""本地验证投稿机器人的下载逻辑：对着一个"会掐断连接"的服务器跑 probe_video。
+﻿"""本地验证投稿机器人的下载逻辑：对着一个"会掐断连接"的服务器跑 probe_video。
 
 用 Blender/UE 自带的 CPython 跑（本机没有系统 Python）：
     <python> tools-test-bot.py http://127.0.0.1:8901/x.mp4
@@ -13,7 +13,7 @@ import time
 from pathlib import Path
 
 HERE = Path(__file__).resolve().parent
-SCRIPT = HERE / ".github" / "scripts" / "process_submission.py"
+SCRIPT = HERE.parent / ".github" / "scripts" / "process_submission.py"
 
 url = sys.argv[1] if len(sys.argv) > 1 else "http://127.0.0.1:8901/x.mp4"
 

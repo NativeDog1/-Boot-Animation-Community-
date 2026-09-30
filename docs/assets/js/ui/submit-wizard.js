@@ -9,6 +9,8 @@ import { el, icon, toast, copyText, clear } from './dom.js';
 import {
   formatBytes, formatDuration, suggestSlug, validateLocalFile, sha256OfFile, readVideoMeta, submitIssueUrl,
 } from '../catalog.js';
+import { planParts, manifestOf, partsHint, DEFAULT_PART_BYTES } from '../lib/split.js';
+import { sha256OfBlob } from '../lib/sha256.js';
 
 let dialog = null;
 let state = null;
@@ -88,6 +90,15 @@ function ensureDialog() {
     }),
   ]);
 
+  // 分片模式：不需要仓库、不需要网盘 —— 在浏览器里切好，分片一起拖进表单就行
+  const splitBtn = el('button', { class: 'btn btn--primary', type: 'button', text: '切成附件分片（不需要网盘/仓库）' });
+  const splitStatus = el('p', { class: 'muted small', style: 'margin-top:8px' });
+  const splitField = el('div', { class: 'stack stack--tight', style: 'margin-top:12px', hidden: true }, [
+    el('span', { class: 'field__label', text: '文件太大拖不进表单？让我把它切成 20 MB 的分片' }),
+    splitBtn,
+    splitStatus,
+  ]);
+
   const submitLink = el('a', { class: 'btn btn--primary', href: '#', target: '_blank', rel: 'noopener', 'aria-disabled': 'true' });
   submitLink.append(document.createTextNode('打开 GitHub 投稿表单'));
   submitLink.addEventListener('click', (e) => { if (submitLink.getAttribute('aria-disabled') === 'true') e.preventDefault(); });
@@ -117,6 +128,7 @@ function ensureDialog() {
       }),
       linkField,
       bigHint,
+      splitField,
       el('div', { class: 'btn-row' }, [submitLink, copyBtn]),
     ]),
   );
@@ -139,6 +151,8 @@ function ensureDialog() {
         nsfw: 'false',
         tags: '',
         description: '',
+        // 分片投稿：清单由切分流程生成，直接填进表单，用户不用手抄
+        parts: (state && state.partsManifest) || '',
       })
       : '#';
     submitLink.setAttribute('aria-disabled', linkOk ? 'false' : 'true');
@@ -153,13 +167,79 @@ function ensureDialog() {
   linkInput.addEventListener('input', applySubmitUrl);
   applySubmitUrl();   // 打开向导时先给一个有效地址，用户点「打开表单」总能到地方
 
+  /* ── 把大文件切成附件分片 ──
+     这是"只拖一次"的关键：不需要仓库、不需要网盘，浏览器里切好之后
+     用户把 N 个分片一起拖进表单，机器人按 sha256 拼回并校验。 */
+  splitBtn.addEventListener('click', async () => {
+    const file = input.files && input.files[0];
+    if (!file) { toast('先在第 1 步选一个视频文件', 'err'); return; }
+    splitBtn.disabled = true;
+    try {
+      splitStatus.textContent = '正在计算校验值（流式读取，不会把文件整个读进内存）…';
+      const sha256 = await sha256OfBlob(file, {
+        onProgress: (done, total) => {
+          splitStatus.textContent = '正在计算校验值… ' + Math.round((done / total) * 100) + '%';
+        },
+      });
+
+      const parts = planParts(file.size, DEFAULT_PART_BYTES, file.name);
+      splitStatus.textContent = '准备写入 ' + parts.length + ' 个分片…';
+
+      // 首选一次选好文件夹（Chrome/Edge 支持），只弹一个对话框；
+      // 不支持就退回逐个下载，用户会在下载目录里拿到这些文件。
+      let dir = null;
+      if (typeof window.showDirectoryPicker === 'function') {
+        try {
+          dir = await window.showDirectoryPicker({ mode: 'readwrite', id: 'ba-parts', startIn: 'downloads' });
+        } catch { dir = null; }
+      }
+
+      for (const part of parts) {
+        const blob = file.slice(part.start, part.end);
+        if (dir) {
+          const handle = await dir.getFileHandle(part.name, { create: true });
+          const writable = await handle.createWritable();
+          await writable.write(blob);
+          await writable.close();
+        } else {
+          const url = URL.createObjectURL(blob);
+          const a = el('a', { href: url, download: part.name });
+          document.body.append(a);
+          a.click();
+          a.remove();
+          setTimeout(() => URL.revokeObjectURL(url), 10000);
+          await new Promise((r) => setTimeout(r, 250));   // 别把浏览器的连续下载挤掉
+        }
+        splitStatus.textContent = '已写入 ' + part.index + '/' + parts.length + ' 个分片…';
+      }
+
+      state.partsManifest = manifestOf({
+        name: file.name,
+        bytes: file.size,
+        parts: parts.length,
+        partBytes: DEFAULT_PART_BYTES,
+        sha256,
+      });
+      applySubmitUrl();
+      splitStatus.textContent = partsHint(parts, file.size)
+        + (dir ? '（已写入你选的文件夹）' : '（已逐个保存到下载目录）')
+        + ' 分片信息已自动填进表单，你不用手抄。';
+    } catch (error) {
+      splitStatus.textContent = '切分失败：' + (error && error.message ? error.message : error);
+    } finally {
+      splitBtn.disabled = false;
+    }
+  });
+
   /* 超过这个体积就不在浏览器里算 sha256 了：WebCrypto 要把整个文件读进内存，
      几百 MB 会直接把标签页拖死甚至崩掉。机器人本来就会自己下载后重算，所以
      跳过它不影响上架 —— 只是"我帮你算好了"这个便利在大文件上让位给"别把浏览器搞崩"。 */
   const SKIP_HASH_ABOVE = 64 * 1024 * 1024;
 
   async function handleFile(file) {
-    state = { fileName: file.name, name: file.name.replace(/\.[^.]+$/, ''), meta: null };
+    state = { fileName: file.name, name: file.name.replace(/\.[^.]+$/, ''), meta: null, partsManifest: '' };
+    splitStatus.textContent = '';
+    splitBtn.disabled = false;
     dropText.textContent = file.name;
     progress.hidden = false;
     progress.textContent = `读取 ${file.name} …`;
@@ -185,17 +265,17 @@ function ensureDialog() {
 
       const MB = 1024 * 1024;
       bigHint.hidden = file.size <= 25 * MB;
+      splitField.hidden = file.size <= 25 * MB;
       if (!bigHint.hidden) {
         bigHint.replaceChildren(
           el('div', {}, [
             el('b', { text: '这个文件超过 25 MB，GitHub 的表单装不下它。' }),
-            el('p', { class: 'small', style: 'margin:6px 0 0', text: '不用建仓库、也不用建 Release：随便找个能直接下载的地方把视频传上去，把直链粘到上面的「视频直链」框里就行。机器人会立刻把视频搬进社区仓库长期托管 —— 你那个链接只要在它下载的几分钟里有效就够了。' }),
-            el('p', { class: 'small', style: 'margin:6px 0 0', text: '手头一个直链都没有？两条路选一条：' }),
+            el('p', { class: 'small', style: 'margin:6px 0 0', text: '最省事：点下面的「切成附件分片」—— 我把它切成 20 MB 一块，你把它们**一起**拖进表单就行。不需要仓库、不需要网盘，分片信息我会自动填进表单，你不用手抄。' }),
+            el('p', { class: 'small', style: 'margin:6px 0 0', text: '也可以走另外两条路（收益一样，看你方便）：' }),
             el('ul', { class: 'small', style: 'margin:6px 0 0;padding-left:1.2em' }, [
-              el('li', { text: '在你自己 GitHub 账号的任意仓库里建一个 Release（Releases → Draft a new release → 把 mp4 拖进附件区），复制它的链接 —— 单文件最大 2 GB，免费、永久。' }),
-              el('li', { text: '或者压一版 1440p（约 10 MB）直接拖进表单。这也是多数人真正会下载的版本。' }),
+              el('li', { text: '贴一个能直接下载的 https 链接（临时的也行，机器人会立刻把视频搬进社区仓库长期托管）。' }),
+              el('li', { text: '压一版 1440p（约 10 MB）直接拖进表单 —— 那也是多数人真正会下载的版本。' }),
             ]),
-            el('p', { class: 'small', style: 'margin:6px 0 0', text: '4K 原画和 1440p 是两条独立投稿，互不影响 —— 先上 1440p、之后再补 4K 也完全可以。' }),
           ]),
         );
       }

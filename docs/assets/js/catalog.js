@@ -257,7 +257,8 @@ export function submitIssueUrl(prefill = {}) {
   p.set('template', 'submit-animation.yml');
   if (prefill.name) p.set('title', '[投稿] ' + prefill.name);
   // issue form 的字段可以用同名字段预填；若某个字段没填上，用户在表单里补一下即可
-  for (const k of ['name', 'slug', 'video', 'license', 'nsfw', 'tags', 'description']) {
+  // parts = 分片投稿的清单（向导切完分片自动生成），格式见 lib/split.js
+  for (const k of ['name', 'slug', 'video', 'license', 'nsfw', 'tags', 'description', 'parts']) {
     if (prefill[k]) p.set(k, prefill[k]);
   }
   return `https://github.com/${REPO}/issues/new?${p.toString()}`;

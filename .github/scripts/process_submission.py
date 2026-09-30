@@ -49,6 +49,9 @@ MAX_DURATION = 30.0
 CHUNK = 1 << 20
 READ_TIMEOUT = 300
 MAX_ATTEMPTS = 4
+# 「分片投稿」清单前缀。格式与 docs/assets/js/lib/split.js 严格一致，
+# 契约样本在 tools/fixtures/parts-manifest.txt，两端各有测试盯着它。
+PARTS_PREFIX = "ba-parts:v1"
 # 代管用的两个端点：建 release 走 api.github.com，传资产走 uploads.github.com
 GITHUB_API = "https://api.github.com"
 GITHUB_UPLOAD = "https://uploads.github.com"
@@ -57,6 +60,7 @@ GITHUB_UPLOAD = "https://uploads.github.com"
 FIELDS = {
     "视频": "video",
     "视频文件或直链": "video",
+    "分片信息": "parts",
     "名称": "name",
     "标签": "tags",
     "授权方式": "license",
@@ -112,17 +116,60 @@ def extract_video_url(text: str):
     return m.group(0) if m else None
 
 
-def probe_video(url: str):
-    """下载视频并量出它的一切。机器能算的，绝不问用户。
-    返回 dict(sha256, bytes, width, height, duration, filename)。"""
-    tmp = Path(tempfile.mkdtemp()) / "submission.mp4"
-    h = hashlib.sha256()
-    total = 0
-    expected = None
+def extract_video_urls(text):
+    """取出字段里**所有**视频地址，按出现顺序。
 
-    # 大文件必须能续传。100 MB 以上的直链在国内经常中途断流，而 urlopen 遇到中断是
-    # "正常结束" —— 不重试的话，投稿人只会看到一条莫名其妙的失败。
-    # 做法与客户端一致：记住已收字节，用 Range 接着下，最多 MAX_ATTEMPTS 轮。
+    单文件投稿只有一个；分片投稿有 N 个（每片一个附件链接）。顺序取正文里的出现顺序 ——
+    那是 GitHub 按拖入顺序插入的，而分片名零填充过（part01、part02…），
+    所以拖入顺序 = 字母序 = 正确顺序。最终正确性由 sha256 判定。
+    """
+    if not text:
+        return []
+    urls = []
+    for m in re.finditer(r"\((https?://[^\s)]+)\)", text):
+        urls.append(m.group(1))
+    if not urls:
+        for m in re.finditer(r"https?://[^\s<>)\]]+", text):
+            urls.append(m.group(0))
+    seen, out = set(), []
+    for u in urls:
+        if u not in seen:
+            seen.add(u)
+            out.append(u)
+    return out
+
+
+def parse_parts_manifest(text):
+    """解析投稿向导生成的「分片信息」。字段与 split.js 的 manifestOf 严格一致。"""
+    raw = re.sub(r"\s+", "", str(text or ""))
+    if not raw.startswith(PARTS_PREFIX):
+        return None
+    fields = {}
+    for pair in raw[len(PARTS_PREFIX):].lstrip(";").split(";"):
+        eq = pair.find("=")
+        if eq > 0:
+            fields[pair[:eq]] = pair[eq + 1:]
+    try:
+        total = int(fields.get("bytes", ""))
+        count = int(fields.get("parts", ""))
+        partbytes = int(fields.get("partbytes", "0") or 0)
+    except (TypeError, ValueError):
+        return None
+    sha = (fields.get("sha256") or "").lower()
+    if total <= 0 or count <= 0 or not HEX64.match(sha):
+        return None
+    return {"name": fields.get("name") or "video.mp4", "bytes": total,
+            "parts": count, "partbytes": partbytes, "sha256": sha}
+
+
+def download_with_resume(url, path, hasher=None, expected_bytes=None, label="文件"):
+    """下到 path，支持 HTTP Range 续传与退避重试；返回收到的字节数。
+
+    单文件投稿与分片投稿共用它 —— 这样"断流能不能接着下"只有一处实现、一处测试。
+    """
+    total = 0
+    expected = expected_bytes
+
     for attempt in range(1, MAX_ATTEMPTS + 1):
         headers = {"User-Agent": "boot-anim-bot"}
         if total > 0:
@@ -132,15 +179,16 @@ def probe_video(url: str):
             with urllib.request.urlopen(req, timeout=READ_TIMEOUT) as r:
                 ctype = (r.headers.get("content-type") or "").lower()
                 if ctype.startswith("text/html"):
-                    fail("这个链接返回的是网页而不是文件（%s）。请确认它是视频直链，"
+                    fail("这个链接返回的是网页而不是文件（%s）。请确认它是直链，"
                          "或者直接把视频文件拖进表单。" % ctype)
 
                 status = getattr(r, "status", 200)
                 if total > 0 and status != 206:
                     # 服务器不支持 Range（返回 200 全量）：只能从头来，别把两段拼一起
-                    print("服务器不支持续传（HTTP %s），从头下载" % status, flush=True)
+                    print("%s：服务器不支持续传（HTTP %s），从头下载" % (label, status), flush=True)
                     total = 0
-                    h = hashlib.sha256()
+                    if hasher is not None:
+                        hasher = hashlib.sha256()
 
                 if expected is None:
                     try:
@@ -149,7 +197,7 @@ def probe_video(url: str):
                     except (TypeError, ValueError):
                         expected = None
 
-                with tmp.open("ab" if total > 0 else "wb") as f:
+                with path.open("ab" if total > 0 else "wb") as f:
                     while True:
                         chunk = r.read(CHUNK)
                         if not chunk:
@@ -160,12 +208,13 @@ def probe_video(url: str):
                                  "的单文件上限，也是免费方案能支撑的极限 —— 请压缩，"
                                  "或同时提供一版 1440p。"
                                  % (MAX_BYTES // 1024 // 1024, total // 1024 // 1024))
-                        h.update(chunk)
+                        if hasher is not None:
+                            hasher.update(chunk)
                         f.write(chunk)
         except SystemExit:
             raise
         except Exception as e:
-            print("第 %d 轮下载中断：%s" % (attempt, e), flush=True)
+            print("%s：第 %d 轮下载中断：%s" % (label, attempt, e), flush=True)
 
         if expected is not None and total >= expected:
             break
@@ -174,14 +223,102 @@ def probe_video(url: str):
         if attempt < MAX_ATTEMPTS:
             time.sleep(2 * attempt)
 
-    # ⚠️ 必须校验完整性：网络中断时 urlopen 会"正常结束"，读到的却是个残缺文件。
-    # 不校验的话，算出来的 sha256 是**残缺数据的哈希** —— 客户端下载完整文件后校验
-    # 永远失败，而我们已经在目录里发布了一条坏条目。（这个坑实测踩到过。）
     if expected is not None and total != expected:
-        fail("下载不完整：服务器声明 %d 字节（约 %.1f MB），续传 %d 轮后只收到 %d 字节"
-             "（约 %.1f MB）。这个直链本身不稳定 —— 建议改用 GitHub Releases 托管："
-             "把同一个文件上传到你自己的仓库 Release，再把 releases/download 直链贴进来。"
-             % (expected, expected / 1048576, MAX_ATTEMPTS, total, total / 1048576))
+        fail("%s 下载不完整：服务器声明 %d 字节（约 %.1f MB），续传 %d 轮后只收到 %d 字节（约 %.1f MB）。"
+             "这个直链本身不稳定 —— 建议改用 Releases 托管，或者用投稿向导把文件切成附件分片。"
+             % (label, expected, expected / 1048576, MAX_ATTEMPTS, total, total / 1048576))
+    return total
+
+
+def ffprobe_meta(path):
+    """读分辨率与时长。读不出来不致命（交给上层"读不出就警告"的分支）。"""
+    width = height = 0
+    duration = 0.0
+    try:
+        out = subprocess.run(
+            ["ffprobe", "-v", "error", "-select_streams", "v:0",
+             "-show_entries", "stream=width,height", "-show_entries", "format=duration",
+             "-of", "json", str(path)],
+            capture_output=True, text=True, timeout=60,
+        )
+        if out.returncode == 0:
+            j = json.loads(out.stdout or "{}")
+            st = (j.get("streams") or [{}])[0]
+            width = int(st.get("width") or 0)
+            height = int(st.get("height") or 0)
+            try:
+                duration = float((j.get("format") or {}).get("duration") or 0)
+            except (TypeError, ValueError):
+                duration = 0.0
+    except FileNotFoundError:
+        fail("工作流里缺 ffprobe（应当在 validate-submission.yml 里装了 ffmpeg）")
+    except Exception:
+        pass
+    return {"width": width, "height": height, "duration": duration}
+
+
+def reassemble_parts(part_urls, manifest):
+    """把 N 个分片按顺序拼回一个文件，并按清单校验大小与 sha256。
+
+    sha256 是唯一可靠的裁判：顺序不对、少拖一片、多拖一份，哈希都会不符，
+    这里就会明确报出来（而不是发布一条坏条目）。
+    """
+    if len(part_urls) != manifest["parts"]:
+        fail("分片信息里写的是 %d 个分片，但表单里只找到 %d 个附件。请把 part01…part%02d **全部**一起拖进来。"
+             % (manifest["parts"], len(part_urls), manifest["parts"]))
+
+    work = Path(tempfile.mkdtemp())
+    out_path = work / "submission.mp4"
+    total = 0
+    h = hashlib.sha256()
+    n = len(part_urls)
+
+    with out_path.open("wb") as out:
+        for i, url in enumerate(part_urls, 1):
+            part = work / ("part%03d" % i)
+            # 除了最后一片，每片都应当是固定大小 —— 传错或多传，这里就能提前发现
+            want = manifest["partbytes"] if (i < n and manifest["partbytes"] > 0) else None
+            # 不把期望字节数交给下载器：那样大小不符会被报成"下载不完整、直链不稳定"，
+            # 而真实原因通常是**拖入顺序不对**（把最后一片排到了第一个）。
+            download_with_resume(url, part, None, None, "第 %d/%d 个分片" % (i, n))
+            got_size = part.stat().st_size
+            if want is not None and got_size != want:
+                fail("第 %d/%d 个分片是 %d 字节，但按分片信息应当是 %d 字节。最常见的原因是**拖入顺序不对** —— 请按文件名 part01、part02… 的顺序全选后一起拖进来；也可能是漏拖或多拖了分片。"
+                     % (i, n, got_size, want))
+            with part.open("rb") as fh:
+                while True:
+                    block = fh.read(CHUNK)
+                    if not block:
+                        break
+                    out.write(block)
+                    h.update(block)
+                    total += len(block)
+            try:
+                part.unlink()
+            except OSError:
+                pass
+
+    if total != manifest["bytes"]:
+        fail("分片拼起来是 %d 字节，但分片信息里写的是 %d 字节 —— 多半是少拖了某个分片，或者多拖了一份。请对照文件名 part01…part%02d 检查一遍。"
+             % (total, manifest["bytes"], manifest["parts"]))
+    actual = h.hexdigest()
+    if actual != manifest["sha256"]:
+        fail("分片内容对不上：拼起来算出的 sha256 与分片信息里的不一致。"
+             "最常见的原因是分片顺序乱了 —— 请按文件名顺序（part01、part02…）重新选中、一起拖进表单。"
+             + "\n\n算出来：%s\n清单里：%s" % (actual, manifest["sha256"]))
+
+    info = {"sha256": actual, "bytes": total, "filename": manifest["name"], "path": str(out_path)}
+    info.update(ffprobe_meta(out_path))
+    print("REASSEMBLED: %d 个分片 → %d 字节，sha256=%s" % (n, total, actual[:16]), flush=True)
+    return info
+
+
+def probe_video(url: str):
+    """下载视频并量出它的一切。机器能算的，绝不问用户。
+    返回 dict(sha256, bytes, width, height, duration, filename)。"""
+    tmp = Path(tempfile.mkdtemp()) / "submission.mp4"
+    h = hashlib.sha256()
+    total = download_with_resume(url, tmp, h, None, "视频")
     if total < 100 * 1024:
         fail(f"下载到的文件只有 {total} 字节，明显不是视频。")
 
@@ -411,15 +548,24 @@ def main():
     if "我确认我拥有该视频的权利" not in f.get("declare", ""):
         fail("必须勾选「我确认我拥有该视频的权利或已获得授权」这一项。")
 
-    url = extract_video_url(f.get("video", ""))
-    if not url:
+    urls = extract_video_urls(f.get("video", ""))
+    if not urls:
         fail("没在「视频」这一栏里找到文件或链接。\n"
-             "最省事的做法：**直接把视频文件拖进那个文本框**，GitHub 会自己上传并填好链接；\n"
-             "或者粘贴一个 https 直链（例如你自己仓库 Releases 里的地址）。")
-    check_url_scheme(url)
+             "最省事的做法：**直接把视频文件拖进那个文本框**；\n"
+             "大于 25 MB 就先用投稿向导把它切成附件分片，再把那些分片**一起**拖进去。")
+    parts_manifest = parse_parts_manifest(f.get("parts", ""))
 
     # ── 机器自己算：下载、哈希、分辨率、时长
-    info = probe_video(url)
+    if parts_manifest:
+        # 分片投稿：附件顺序不值得信任，正确性完全由清单里的 sha256 判定
+        for u in urls:
+            check_url_scheme(u)
+        info = reassemble_parts(urls, parts_manifest)
+        url = urls[0] if len(urls) == 1 else "(分片投稿：%d 个附件)" % len(urls)
+    else:
+        url = urls[0]
+        check_url_scheme(url)
+        info = probe_video(url)
     print(f"PROBED: {info['bytes']} bytes, {info['width']}x{info['height']}, "
           f"{info['duration']:.2f}s, sha256={info['sha256'][:16]}…")
 
