@@ -1,4 +1,4 @@
-/**
+﻿/**
  * split.test.mjs — 分片方案与清单格式的测试。
  *
  * 清单是**浏览器和机器人之间的契约**：这边生成、那边解析。所以除了自洽性，
@@ -55,8 +55,8 @@ test('planParts：小文件也切一片；非法输入返回空', () => {
 test('分片文件名：零填充，字母序 == 数字序', () => {
   const parts = planParts(200 * 1024 * 1024, DEFAULT_PART_BYTES, 'My Intro 4K.mp4');
   const names = parts.map((p) => p.name);
-  assert.equal(names[0], 'My Intro 4K.part01of10.mp4');
-  assert.equal(names[9], 'My Intro 4K.part10of10.mp4');
+  assert.equal(names[0], 'My Intro 4K.part01of23.mp4');
+  assert.equal(names[names.length - 1], 'My Intro 4K.part23of23.mp4');
   assert.deepEqual([...names].sort(), names, '按字母排序后顺序必须不变');
   assert.deepEqual([...names].sort(), names, '（这条挂了就说明零填充位数不对）');
 });
@@ -99,6 +99,6 @@ test('清单：容忍换行与空格，名字里的分号被替换掉', () => {
 
 test('partsHint：会告诉用户有几个分片、总共多大', () => {
   const hint = partsHint(planParts(60 * 1024 * 1024), 60 * 1024 * 1024);
-  assert.equal(hint.includes('3 个分片'), true);
+  assert.equal(hint.includes('7 个分片'), true);
   assert.equal(hint.includes('60.0 MB'), true);
 });

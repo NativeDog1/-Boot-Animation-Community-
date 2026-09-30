@@ -39,7 +39,7 @@ VIDEO_EXT = re.compile(r"\.(mp4|mov|m4v|webm)(\?|$)", re.I)
 
 # 单个文件上限：对齐 GitHub Release 附件的每文件上限（2 GB）—— 大文件唯一免费的
 # 托管路径就是 Releases，硬上限不该比它更低。真正的门槛在提交者那边：Issue 附件只有
-# 25 MB，超过就必须走 Releases 直链（见 .github/ISSUE_TEMPLATE/submit-animation.yml）。
+# 10 MB，超过就必须走 Releases 直链（见 .github/ISSUE_TEMPLATE/submit-animation.yml）。
 MAX_BYTES = 2000 * 1024 * 1024
 # 超过这个体积只是提醒，不算失败：4K 原画本来就这么大。
 WARN_BYTES = 200 * 1024 * 1024
@@ -564,7 +564,7 @@ def main():
     if not urls:
         fail("没在「视频」这一栏里找到文件或链接。\n"
              "最省事的做法：**直接把视频文件拖进那个文本框**；\n"
-             "大于 25 MB 就先用投稿向导把它切成附件分片，再把那些分片**一起**拖进去。")
+             "大于 10 MB 就先用投稿向导把它切成附件分片，再把那些分片**一起**拖进去。")
     parts_manifest = parse_parts_manifest(f.get("parts", ""))
 
     # ── 机器自己算：下载、哈希、分辨率、时长

@@ -14,10 +14,24 @@
  */
 
 export const PART_PREFIX = 'ba-parts:v1';
-/** 每个分片的目标大小：要**明显小于** GitHub 的 25 MB 附件上限。 */
-export const DEFAULT_PART_BYTES = 20 * 1024 * 1024;
-/** GitHub 附件上限（用来判断"能不能直接拖"以及分片是否超标）。 */
-export const ATTACH_LIMIT = 25 * 1024 * 1024;
+/**
+ * 每个分片的目标大小。
+ *
+ * ⚠️ 这个数字是**实测**出来的，不是猜的：投稿 Issue #4/#5 里 GitHub 自己留下了
+ * `<!-- Failed to upload "…part1of3.mp4" -->` —— 当时每片 20 MB，三个全被拒。
+ * 也就是说 Issue 表单的附件上限**低于 20 MB**（通行的说法是 10 MB），
+ * 而不是我们原先以为的 25 MB。所以这里取 9 MB，留出安全余量。
+ */
+export const DEFAULT_PART_BYTES = 9 * 1024 * 1024;
+/** GitHub Issue 表单的附件上限（实测 < 20 MB；按 10 MB 保守处理）。 */
+export const ATTACH_LIMIT = 10 * 1024 * 1024;
+/** 一次拖拽/一条 Issue 里能带的附件数量（GitHub 通常限制 10 个左右）。 */
+export const MAX_PARTS_PER_ISSUE = 10;
+
+/** 这个文件能不能靠"切成附件分片"投上去（一条 Issue 装得下）？ */
+export function fitsOneIssue(size) {
+  return Number(size) <= DEFAULT_PART_BYTES * MAX_PARTS_PER_ISSUE;
+}
 
 /** 分片文件名：零填充到 count 的位数，保证**字母序 = 数字序**（拖进表单后顺序不会乱）。 */
 export function partFileName(baseName, index, count) {

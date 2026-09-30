@@ -294,7 +294,7 @@ export function validateLocalFile(meta) {
   if (!bytes) issues.push('读不到文件大小');
   else if (bytes > MAX_GB_LIMIT) issues.push(`文件 ${formatBytes(bytes)}，超过 2 GB —— 这是 GitHub Release 的单文件上限，也是免费方案能支撑的极限`);
   else if (bytes > WARN_LIMIT) warn.push(`文件 ${formatBytes(bytes)}，下载会很久（客户端支持断点续传）。建议同时再提供一版 1440p（约 10 MB）单独投稿`);
-  else if (bytes > 25 * 1024 * 1024) warn.push(`文件 ${formatBytes(bytes)}，偏大 —— 超过 25 MB 就无法直接拖进投稿表单，这时贴一个能直接下载的链接即可（机器人会替你搬进社区仓库长期托管，不需要你自己建仓库）`);
+  else if (bytes > 10 * 1024 * 1024) warn.push(`文件 ${formatBytes(bytes)}，偏大 —— 超过 10 MB 就无法直接拖进投稿表单，这时贴一个能直接下载的链接即可（机器人会替你搬进社区仓库长期托管，不需要你自己建仓库）`);
 
   if (duration && duration > 30) issues.push(`时长 ${duration.toFixed(1)} 秒，超过上限 30 秒（开机动画建议 5–10 秒）`);
   else if (duration && duration > 12) warn.push(`时长 ${duration.toFixed(1)} 秒，偏长 —— 开机动画超过 10 秒容易让人烦`);

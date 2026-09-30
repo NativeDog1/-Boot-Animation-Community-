@@ -181,7 +181,7 @@ export const DOCS = [
     <tr><td>容器 / 编码</td><td>mp4，H.264 + AAC</td><td>Windows 自带解码器最稳，兼容性最好</td></tr>
     <tr><td>分辨率</td><td>2560×1440 为主</td><td>社区主流屏幕是 1440p；4K 单个几十 MB，下载明显更慢</td></tr>
     <tr><td>时长</td><td>5–10 秒</td><td>登录后超过 10 秒会让人等得烦</td></tr>
-    <tr><td>体积</td><td>≤ 30 MB 体验最好</td><td>用户会挑小的；超过 25 MB 拖不进投稿表单，贴个直链就行（机器人会替你托管），硬上限 2 GB</td></tr>
+    <tr><td>体积</td><td>≤ 30 MB 体验最好</td><td>用户会挑小的；超过 10 MB 拖不进投稿表单，贴个直链就行（机器人会替你托管），硬上限 2 GB</td></tr>
     <tr><td>索引</td><td>必须 faststart</td><td>否则播放器要读完整个文件才出画面，表现为黑屏卡住</td></tr>
   </tbody>
 </table>
@@ -202,7 +202,7 @@ export const DOCS = [
 <ul>
   <li>本地算出 <code>sha256</code>（<strong>视频不会上传到我们这里</strong>）。</li>
   <li>读出分辨率、时长、体积，并从视频里抽一帧当预览。</li>
-  <li>按社区规范校验：体积超过 2 GB 或时长超过 30 秒会直接标为不合规；超过 25 MB（拖不进表单，需要贴直链）、超过 200 MB、超过 12 秒、或者本身是 4K，会给出提醒。</li>
+  <li>按社区规范校验：体积超过 2 GB 或时长超过 30 秒会直接标为不合规；超过 10 MB（拖不进表单，需要贴直链）、超过 200 MB、超过 12 秒、或者本身是 4K，会给出提醒。</li>
   <li>生成一份可直接粘进 GitHub 表单的元数据，以及带好参数的投稿链接。</li>
 </ul>
 <p>先让向导过一遍，能省掉一轮返工。</p>
@@ -235,7 +235,7 @@ export const DOCS = [
 
 <h2>视频放哪</h2>
 <dl class="facts">
-  <dt>最省事</dt><dd>≤ 25 MB 直接把文件拖进表单，链接由 GitHub 生成，你什么都不用管</dd>
+  <dt>最省事</dt><dd>≤ 10 MB 直接把文件拖进表单，链接由 GitHub 生成，你什么都不用管</dd>
   <dt>大文件</dt><dd>贴<strong>任何能直接下载</strong>的 https 链接即可 —— 自己的 Releases、对象存储、网盘给的临时直链都行。<strong>机器人会立刻把它搬进社区仓库托管</strong>，所以你的链接不必长期有效</dd>
   <dt>不合格</dt><dd>网盘分享页（要登录、要跳转的那种）。机器人只认直链，不解析网页</dd>
 </dl>
@@ -247,10 +247,10 @@ export const DOCS = [
 </div>
 
 <h2>大文件（4K 原画等）怎么投</h2>
-<p>GitHub 的 <strong>Issue 附件上限是 25 MB</strong>，所以按体积分两条路 —— <strong>两条都不需要你有仓库、也不需要建 Release</strong>：</p>
+<p>GitHub 的 <strong>Issue 附件上限是 10 MB</strong>，所以按体积分两条路 —— <strong>两条都不需要你有仓库、也不需要建 Release</strong>：</p>
 <ol class="steps">
-  <li><b>≤ 25 MB</b><p class="muted small">直接把文件拖进投稿表单的「视频」框。GitHub 会自己托管它、自动把链接填好；其余数字机器人都会自己算。</p></li>
-  <li><b>大于 25 MB</b><p class="muted small">把视频传到<strong>任何一个能直接下载的地方</strong>（自己的 Releases、对象存储、网盘给的临时直链都行），把链接粘进表单的「视频」框。<strong>机器人会立刻把视频搬进社区仓库的托管 Release 长期托管</strong>，所以你那个链接只要在它下载的那几分钟里有效就够了。</p></li>
+  <li><b>≤ 10 MB</b><p class="muted small">直接把文件拖进投稿表单的「视频」框。GitHub 会自己托管它、自动把链接填好；其余数字机器人都会自己算。</p></li>
+  <li><b>大于 10 MB</b><p class="muted small">把视频传到<strong>任何一个能直接下载的地方</strong>（自己的 Releases、对象存储、网盘给的临时直链都行），把链接粘进表单的「视频」框。<strong>机器人会立刻把视频搬进社区仓库的托管 Release 长期托管</strong>，所以你那个链接只要在它下载的那几分钟里有效就够了。</p></li>
 </ol>
 <div class="callout callout--info">
   <div>
@@ -324,7 +324,7 @@ export const DOCS = [
 <ul>
   <li><strong>1440p（2560×1440）是社区主流</strong>，内置四段也是这个分辨率。</li>
   <li>4K 能跑，但单个文件常常几十 MB，下载明显更慢；社区建议投稿出 1440p。</li>
-  <li>建议体积 ≤ 30 MB；硬上限 2 GB。注意：超过 25 MB 就没法直接拖进投稿表单 —— 这时把视频传到任何能直接下载的地方、把链接贴进表单即可，机器人会替你搬进社区仓库托管。</li>
+  <li>建议体积 ≤ 30 MB；硬上限 2 GB。注意：超过 10 MB 就没法直接拖进投稿表单 —— 这时把视频传到任何能直接下载的地方、把链接贴进表单即可，机器人会替你搬进社区仓库托管。</li>
 </ul>
 
 <h2>音频</h2>

@@ -1,4 +1,4 @@
-/**
+﻿/**
  * submit-wizard.js — 投稿向导。**把旧版 docs/app.js 里那套浏览端向导完整搬过来**，
  * 行为一字不改：选文件 → 本地算 sha256 + 抽预览帧 + 校验 → 打开预填好的 GitHub 表单。
  *
@@ -9,7 +9,7 @@ import { el, icon, toast, copyText, clear } from './dom.js';
 import {
   formatBytes, formatDuration, suggestSlug, validateLocalFile, sha256OfFile, readVideoMeta, submitIssueUrl,
 } from '../catalog.js';
-import { planParts, manifestOf, partsHint, DEFAULT_PART_BYTES } from '../lib/split.js';
+import { planParts, manifestOf, partsHint, DEFAULT_PART_BYTES, ATTACH_LIMIT, fitsOneIssue, MAX_PARTS_PER_ISSUE } from '../lib/split.js';
 import { sha256OfBlob } from '../lib/sha256.js';
 
 let dialog = null;
@@ -71,7 +71,7 @@ function ensureDialog() {
   const result = el('div', { id: 'ba-wiz-result', style: 'margin-top:12px' }, [
     el('p', { class: 'muted small', text: '还没选文件。' }),
   ]);
-  // 大文件（尤其是 4K 原画）的专用提示：> 25 MB 就没法拖进 Issue 表单了
+  // 大文件（尤其是 4K 原画）的专用提示：> 10 MB 就没法拖进 Issue 表单了
   const bigHint = el('div', { class: 'callout callout--warn', hidden: true, style: 'margin-top:12px' });
 
   // 直链输入：把视频传到自己仓库的 Release 之后，把链接粘这里，表单会自动带上
@@ -82,7 +82,7 @@ function ensureDialog() {
     'aria-label': '视频直链（可选）',
   });
   const linkField = el('div', { class: 'field', style: 'margin-top:10px' }, [
-    el('span', { class: 'field__label', text: '视频直链（可选 · 大于 25 MB 时贴这里）' }),
+    el('span', { class: 'field__label', text: '视频直链（可选 · 大于 10 MB 时贴这里）' }),
     linkInput,
     el('span', {
       class: 'field__hint',
@@ -99,11 +99,11 @@ function ensureDialog() {
     splitStatus,
   ]);
 
-  // ── 路线开关：文件超过 25 MB 时，拖不进表单，让用户明确二选一 ──
+  // ── 路线开关：文件超过 10 MB 时，拖不进表单，让用户明确二选一 ──
   const routeSplitBtn = el('button', { class: 'chip', type: 'button', 'aria-pressed': 'true', text: '切成附件分片（不需要外部托管）' });
   const routeLinkBtn = el('button', { class: 'chip', type: 'button', 'aria-pressed': 'false', text: '我贴一个链接（机器人代管）' });
   const routeSwitch = el('div', { style: 'margin-top:12px', hidden: true }, [
-    el('span', { class: 'field__label', text: '文件超过 25 MB，选一种交给我' }),
+    el('span', { class: 'field__label', text: '文件超过 10 MB，选一种交给我' }),
     el('div', { class: 'chips', style: 'margin-top:6px' }, [routeSplitBtn, routeLinkBtn]),
   ]);
 
@@ -144,7 +144,7 @@ function ensureDialog() {
       el('h3', { text: '3 · 去 GitHub 提交' }),
       el('p', {
         class: 'muted small',
-        text: '点下面的按钮打开投稿表单（名称已帮你预填）。≤ 25 MB 就在表单里把同一个文件拖进「视频」框；更大的文件把直链粘到下面，我会一起填进表单 —— 上传和托管都由机器人接手。',
+        text: '点下面的按钮打开投稿表单（名称已帮你预填）。≤ 10 MB 就在表单里把同一个文件拖进「视频」框；更大的文件把直链粘到下面，我会一起填进表单 —— 上传和托管都由机器人接手。',
       }),
       routeSwitch,
       linkField,
@@ -263,7 +263,7 @@ function ensureDialog() {
       name: file.name.replace(/\.[^.]+$/, ''),
       meta: null,
       partsManifest: '',
-      route: (state && state.route) || 'split',   // 记住用户上次选的路线
+      route: (state && state.route) || 'link',   // 默认走链接：大文件切分片装不下
     };
     splitStatus.textContent = '';
     splitBtn.disabled = false;
@@ -290,8 +290,8 @@ function ensureDialog() {
       copyBtn.disabled = false;
       applySubmitUrl();
 
-      const MB = 1024 * 1024;
-      const tooBig = file.size > 25 * MB;
+      const tooBig = file.size > ATTACH_LIMIT;
+      const canSplit = fitsOneIssue(file.size);
       bigHint.hidden = !tooBig;
       routeSwitch.hidden = !tooBig;
       if (!tooBig) {
@@ -299,15 +299,20 @@ function ensureDialog() {
         linkField.hidden = false;
         splitField.hidden = true;
       } else {
-        // 大文件：走开关选定的那条路（默认切分片）
-        setRoute(state.route || 'split');
+        // 大文件：默认走链接（机器人代管）。切分片只在一条 Issue 装得下时可用。
+        setRoute(canSplit ? (state.route || 'link') : 'link');
       }
+      routeSplitBtn.disabled = !canSplit;
+      routeSplitBtn.title = canSplit ? ''
+        : '这个文件太大：一条 Issue 最多带 ' + MAX_PARTS_PER_ISSUE + ' 个附件，切分片也装不下（约 '
+          + Math.round((DEFAULT_PART_BYTES * MAX_PARTS_PER_ISSUE) / 1048576) + ' MB 上限）。请用链接。';
       if (tooBig) {
         bigHint.replaceChildren(
           el('div', {}, [
-            el('b', { text: '这个文件超过 25 MB，GitHub 的表单装不下它 —— 上面两条路选一条即可，都不需要你有仓库或 Release。' }),
-            el('p', { class: 'small', style: 'margin:6px 0 0', text: '「切成附件分片」：我把它切成 20 MB 一块写进你选的文件夹，你把它们一起拖进表单就行；分片信息自动填好，机器人拼回后核对哈希。' }),
-            el('p', { class: 'small', style: 'margin:6px 0 0', text: '「我贴一个链接」：把视频放到任何能直接下载的地方（自己的 Releases、对象存储、网盘给的临时直链都行），把链接粘进下面的框 —— 机器人会立刻把它搬进社区仓库长期托管，所以那个链接只需要在它下载的几分钟里有效。' }),
+            el('b', { text: '这个文件超过 10 MB，GitHub 的表单装不下它。' }),
+            el('p', { class: 'small', style: 'margin:6px 0 0', text: '「我贴一个链接」：把视频放到任何能直接下载的地方（自己的 Releases、对象存储、网盘给的临时直链都行），把链接粘进下面的框 —— 机器人会立刻把它搬进社区仓库长期托管，所以那个链接只需要在它下载的几分钟里有效。你不需要有仓库或 Release。' }),
+            el('p', { class: 'small', style: 'margin:6px 0 0', text: '「切成附件分片」：适合 10–90 MB 的文件 —— 我把它切成 9 MB 一块写进你选的文件夹，你把它们一起拖进表单，分片信息自动填好。' }),
+            canSplit ? null : el('p', { class: 'small', style: 'margin:6px 0 0', text: '⚠️ 你这个文件已经超出"切分片"能承受的范围（一条 Issue 最多 10 个附件 × 9 MB），所以只能走链接。' }),
           ]),
         );
       }

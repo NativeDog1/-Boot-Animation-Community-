@@ -1,4 +1,4 @@
-/**
+﻿/**
  * catalog.test.mjs — 目录纯逻辑的单元测试。零依赖，用 Node 自带的测试运行器。
  *
  *   node --test tools/            # 或 npm test
@@ -213,11 +213,11 @@ test('validateLocalFile：阈值与 SCHEMA / 机器人一致（2 GB / 30 s / 4K�
   assert.equal(validateLocalFile({ bytes: 0, duration: 7, width: 1920, height: 1080 }).ok, false);
 });
 
-test('validateLocalFile：超过 25 MB 要提醒"不能直接拖进表单"', () => {
+test('validateLocalFile：超过 10 MB 要提醒"不能直接拖进表单"', () => {
   const MB = 1024 * 1024;
   const over = validateLocalFile({ bytes: 40 * MB, duration: 7, width: 1920, height: 1080 });
   assert.equal(over.ok, true);
-  assert.equal(over.warn.some((w) => w.includes('25 MB')), true);
+  assert.equal(over.warn.some((w) => w.includes('10 MB')), true);
 
   const huge = validateLocalFile({ bytes: 300 * MB, duration: 7, width: 3840, height: 2160 });
   assert.equal(huge.ok, true);
