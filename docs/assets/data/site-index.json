@@ -1,0 +1,125 @@
+{
+  "generatedAt": "2026-09-30T10:01:25.005Z",
+  "pages": [
+    {
+      "kind": "doc",
+      "id": "getting-started",
+      "title": "开机动画是什么",
+      "subtitle": "登录后播放几秒的片头，不是改开机画面",
+      "href": "docs/getting-started/",
+      "keywords": "getting-started 开机动画是什么 登录后播放几秒的片头，不是改开机画面 文档 docs"
+    },
+    {
+      "kind": "doc",
+      "id": "installation",
+      "title": "安装与卸载",
+      "subtitle": "一个 exe，不要管理员，先过 SmartScreen",
+      "href": "docs/installation/",
+      "keywords": "installation 安装与卸载 一个 exe，不要管理员，先过 smartscreen 文档 docs"
+    },
+    {
+      "kind": "doc",
+      "id": "importing-animations",
+      "title": "装一个社区动画",
+      "subtitle": "点「装到我的开机动画」后，客户端做了什么",
+      "href": "docs/importing-animations/",
+      "keywords": "importing-animations 装一个社区动画 点「装到我的开机动画」后，客户端做了什么 文档 docs"
+    },
+    {
+      "kind": "doc",
+      "id": "creating-animations",
+      "title": "做一个自己的动画",
+      "subtitle": "导出参数、ffmpeg 命令与投稿向导",
+      "href": "docs/creating-animations/",
+      "keywords": "creating-animations 做一个自己的动画 导出参数、ffmpeg 命令与投稿向导 文档 docs"
+    },
+    {
+      "kind": "doc",
+      "id": "submission",
+      "title": "投稿到社区",
+      "subtitle": "填一个 Issue，机器人校验后自动上架",
+      "href": "docs/submission/",
+      "keywords": "submission 投稿到社区 填一个 issue，机器人校验后自动上架 文档 docs"
+    },
+    {
+      "kind": "doc",
+      "id": "compatibility",
+      "title": "兼容性与格式要求",
+      "subtitle": "H.264 最稳，faststart 是硬要求",
+      "href": "docs/compatibility/",
+      "keywords": "compatibility 兼容性与格式要求 h.264 最稳，faststart 是硬要求 文档 docs"
+    },
+    {
+      "kind": "doc",
+      "id": "troubleshooting",
+      "title": "排错",
+      "subtitle": "先看日志，再动手；常见四类问题",
+      "href": "docs/troubleshooting/",
+      "keywords": "troubleshooting 排错 先看日志，再动手；常见四类问题 文档 docs"
+    },
+    {
+      "kind": "doc",
+      "id": "recovery",
+      "title": "出问题怎么恢复",
+      "subtitle": "三条退出路径，怎么只关自启，怎么彻底卸载",
+      "href": "docs/recovery/",
+      "keywords": "recovery 出问题怎么恢复 三条退出路径，怎么只关自启，怎么彻底卸载 文档 docs"
+    },
+    {
+      "kind": "doc",
+      "id": "faq",
+      "title": "常见问题",
+      "subtitle": "10 个最常被问到的问题",
+      "href": "docs/faq/",
+      "keywords": "faq 常见问题 10 个最常被问到的问题 文档 docs"
+    },
+    {
+      "kind": "page",
+      "id": "download",
+      "title": "下载开机动画",
+      "subtitle": "Windows 10 / 11",
+      "href": "download/",
+      "keywords": "下载 download 安装 windows 软件"
+    },
+    {
+      "kind": "page",
+      "id": "animations",
+      "title": "动画库",
+      "subtitle": "浏览社区动画",
+      "href": "animations/",
+      "keywords": "动画库 animations 浏览 社区"
+    },
+    {
+      "kind": "page",
+      "id": "community",
+      "title": "社区与投稿",
+      "subtitle": "投稿流程与作者",
+      "href": "community/",
+      "keywords": "社区 投稿 submit 作者 creator"
+    },
+    {
+      "kind": "page",
+      "id": "creators",
+      "title": "作者",
+      "subtitle": "社区作者列表",
+      "href": "creators/",
+      "keywords": "作者 creators 上传者"
+    },
+    {
+      "kind": "page",
+      "id": "about",
+      "title": "关于",
+      "subtitle": "项目与架构",
+      "href": "about/",
+      "keywords": "关于 about 架构 许可"
+    },
+    {
+      "kind": "page",
+      "id": "changelog",
+      "title": "更新日志",
+      "subtitle": "版本与提交",
+      "href": "changelog/",
+      "keywords": "更新日志 changelog release"
+    }
+  ]
+}

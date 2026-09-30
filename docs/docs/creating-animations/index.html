@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+
+<title>做一个自己的动画 · Boot Animation</title>
+<meta name="description" content="导出参数、ffmpeg 命令与投稿向导">
+<link rel="canonical" href="https://nativedog1.github.io/-Boot-Animation-Community-/docs/creating-animations/">
+
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="Boot Animation">
+<meta property="og:title" content="做一个自己的动画 · Boot Animation">
+<meta property="og:description" content="导出参数、ffmpeg 命令与投稿向导">
+<meta property="og:url" content="https://nativedog1.github.io/-Boot-Animation-Community-/docs/creating-animations/">
+<meta property="og:locale" content="zh_CN">
+
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="做一个自己的动画 · Boot Animation">
+<meta name="twitter:description" content="导出参数、ffmpeg 命令与投稿向导">
+
+<meta name="theme-color" content="#0a0b0d">
+<link rel="icon" href="../../assets/favicon.svg" type="image/svg+xml">
+<link rel="stylesheet" href="../../assets/css/tokens.css">
+<link rel="stylesheet" href="../../assets/css/base.css">
+<link rel="stylesheet" href="../../assets/css/components.css">
+<script type="application/ld+json">{"@context":"https://schema.org","@type":"TechArticle","headline":"做一个自己的动画","description":"导出参数、ffmpeg 命令与投稿向导","url":"https://nativedog1.github.io/-Boot-Animation-Community-/docs/creating-animations/","inLanguage":"zh-CN"}</script>
+</head>
+<body data-page="static">
+<a class="skip" href="#ba-main">跳到主内容</a>
+<header class="site-header">
+  <div class="site-header__inner">
+    <a class="brand" href="../../" aria-label="Boot Animation 首页">
+      <span class="brand__mark"><svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M4 6.5h16v11H4z" stroke="#fff" stroke-width="1.6"/><path d="M9.5 10.2v3.6l4.2-1.8z" fill="#fff"/></svg></span>
+      <span class="brand__text"><span class="brand__name">Boot Animation</span><span class="brand__sub">开机动画</span></span>
+    </a>
+    <nav class="nav" aria-label="主导航"><a class="nav__link" href="../../animations/">动画库</a><a class="nav__link" href="../../community/">社区</a><a class="nav__link" href="../../download/">下载</a><a class="nav__link" href="../../docs/" aria-current="page">文档</a><a class="nav__link" href="../../creators/">作者</a></nav>
+    <div class="header-actions">
+      <button class="search-trigger" id="ba-search" type="button" aria-label="搜索（Ctrl+K）">
+        <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5"/></svg>
+        <span class="search-trigger__text">搜索</span>
+        <span class="search-trigger__kbd"><kbd>Ctrl</kbd><kbd>K</kbd></span>
+      </button>
+      <a class="btn btn--primary btn--sm" href="../../download/">下载软件</a>
+      <button class="icon-btn burger" id="ba-burger" type="button" aria-label="打开菜单" aria-expanded="false" aria-controls="ba-mobile-nav">
+        <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" aria-hidden="true"><path d="M4 7h16"/><path d="M4 12h16"/><path d="M4 17h16"/></svg>
+      </button>
+    </div>
+  </div>
+</header>
+<nav class="mobile-nav" id="ba-mobile-nav" hidden aria-label="移动端导航"></nav>
+<main id="ba-main">
+<section class="section section--tight">
+  <div class="wrap">
+    <nav class="breadcrumb" aria-label="面包屑">
+      <a href="../../">首页</a><span class="breadcrumb__sep">/</span>
+      <a href="../../docs/">文档</a><span class="breadcrumb__sep">/</span><span>做一个自己的动画</span>
+    </nav>
+    <div class="docs-layout">
+      <nav class="docs-nav" aria-label="文档目录"><h4>开始</h4><ul><li><a href="../../docs/getting-started/">开机动画是什么</a></li><li><a href="../../docs/installation/">安装与卸载</a></li></ul><h4>使用</h4><ul><li><a href="../../docs/importing-animations/">装一个社区动画</a></li><li><a href="../../docs/compatibility/">兼容性与格式要求</a></li></ul><h4>制作与投稿</h4><ul><li><a href="../../docs/creating-animations/" aria-current="page">做一个自己的动画</a></li><li><a href="../../docs/submission/">投稿到社区</a></li></ul><h4>排错与恢复</h4><ul><li><a href="../../docs/troubleshooting/">排错</a></li><li><a href="../../docs/recovery/">出问题怎么恢复</a></li><li><a href="../../docs/faq/">常见问题</a></li></ul></nav>
+      <article class="prose">
+        <h1>做一个自己的动画</h1>
+        <p class="muted">导出参数、ffmpeg 命令与投稿向导</p>
+        
+<p>自己做一段并不难：剪一条 5–10 秒的视频，按下面的参数导出，再投到社区。</p>
+
+<h2>导出参数</h2>
+<table>
+  <thead>
+    <tr><th>项目</th><th>建议</th><th>原因</th></tr>
+  </thead>
+  <tbody>
+    <tr><td>容器 / 编码</td><td>mp4，H.264 + AAC</td><td>Windows 自带解码器最稳，兼容性最好</td></tr>
+    <tr><td>分辨率</td><td>2560×1440 为主</td><td>社区主流屏幕是 1440p；4K 单个几十 MB，下载明显更慢</td></tr>
+    <tr><td>时长</td><td>5–10 秒</td><td>登录后超过 10 秒会让人等得烦</td></tr>
+    <tr><td>体积</td><td>≤ 30 MB 最佳</td><td>用户会挑小的；社区硬上限是 100 MB</td></tr>
+    <tr><td>索引</td><td>必须 faststart</td><td>否则播放器要读完整个文件才出画面，表现为黑屏卡住</td></tr>
+  </tbody>
+</table>
+
+<h2>ffmpeg 命令</h2>
+<p>只把索引表前置，不重编码，最快：</p>
+<pre><code>ffmpeg -i 原片.mp4 -c copy -movflags +faststart 输出.mp4</code></pre>
+<p>需要缩放或重新编码时（下面这组参数就是内置四段用的）：</p>
+<pre><code>ffmpeg -i 原片.mp4 -vf "unsharp=5:5:0.9:5:5:0.0,scale=2560:1440:flags=lanczos" -c:v libx264 -crf 20 -preset medium -pix_fmt yuv420p -movflags +faststart -an 输出.mp4</code></pre>
+<div class="callout callout--info">
+  <div>
+    <p>不需要声音就保持上面的 <code>-an</code>；要带音轨就把 <code>-an</code> 换成 <code>-c:a aac</code>。内置四段都是 2560×1440、24fps、无音轨。CRF 取 20 就够了：实测 CRF 20 与 18 的锐度只差一点点，体积却差 10 MB。</p>
+  </div>
+</div>
+
+<h2>用网站上的投稿向导</h2>
+<p>本站首页有「投稿向导」。把 mp4 拖进去，剩下的事在浏览器本地就做完了：</p>
+<ul>
+  <li>本地算出 <code>sha256</code>（<strong>视频不会上传到我们这里</strong>）。</li>
+  <li>读出分辨率、时长、体积，并从视频里抽一帧当预览。</li>
+  <li>按社区规范校验：体积超过 100 MB 或时长超过 30 秒会直接标为不合规；超过 30 MB、超过 12 秒、或者本身是 4K，会给出提醒。</li>
+  <li>生成一份可直接粘进 GitHub 表单的元数据，以及带好参数的投稿链接。</li>
+</ul>
+<p>先让向导过一遍，能省掉一轮返工。</p>
+
+<div class="callout callout--warn">
+  <div>
+    <p>别用「逐帧 AI 放大」去补细节。逐帧图片模型会为每一帧想象出不同的微观纹理，连起来就是明显的帧间闪烁（实测闪烁指标从「无」跳到 6.18，属于严重），而对「多加出来的细节层」做时间平滑几乎压不掉这种抖动（实测只压掉 1.8%）。母带本身没有的细节，编码参数也救不回来。真要补细节，用天生带时间维度的视频超分模型。</p>
+  </div>
+</div>
+
+        <hr>
+        <div class="btn-row" style="justify-content:space-between">
+          <a class="btn" href="../../docs/importing-animations/">← 装一个社区动画</a>
+          <a class="btn" href="../../docs/submission/">投稿到社区 →</a>
+        </div>
+        <p class="muted small" style="margin-top:var(--s-4)">这篇没解决你的问题？去 <a class="link" href="https://github.com/NativeDog1/-Boot-Animation-Community-/issues/new" target="_blank" rel="noopener">仓库提 Issue</a>，或者先看 <a class="link" href="../../docs/troubleshooting/">排错</a> 与 <a class="link" href="../../docs/recovery/">恢复</a>。</p>
+      </article>
+    </div>
+  </div>
+</section>
+
+</main>
+<footer class="site-footer">
+  <div class="wrap">
+    <div class="site-footer__grid">
+      <div class="site-footer__col">
+        <h4>Boot Animation</h4>
+        <p class="muted small">YOUR BOOT. YOUR IDENTITY.<br>登录后播放几秒的开机片头，配一个公开的社区动画库。</p>
+      </div>
+      <div class="site-footer__col"><h4>产品</h4><ul><li><a href="../../download/">下载软件</a></li><li><a href="../../animations/">动画库</a></li><li><a href="../../community/">社区与投稿</a></li><li><a href="../../changelog/">更新日志</a></li></ul></div>
+      <div class="site-footer__col"><h4>文档</h4><ul><li><a href="../../docs/getting-started/">快速开始</a></li><li><a href="../../docs/installation/">安装与卸载</a></li><li><a href="../../docs/importing-animations/">装一个社区动画</a></li><li><a href="../../docs/recovery/">出问题怎么恢复</a></li></ul></div>
+      <div class="site-footer__col"><h4>社区</h4><ul><li><a href="https://github.com/NativeDog1/-Boot-Animation-Community-">数据仓库</a></li><li><a href="https://github.com/NativeDog1/-Boot-Animation-Community-/blob/main/SCHEMA.md">条目规范</a></li><li><a href="https://github.com/NativeDog1/-Boot-Animation-Community-/issues/new?template=submit-animation.yml">投稿</a></li><li><a href="https://github.com/NativeDog1/-Boot-Animation-Community-/issues/new?template=report.yml">举报内容</a></li></ul></div>
+    </div>
+    <div class="site-footer__bottom">
+      <span>数据来自 GitHub 仓库，视频由各自作者托管；本站没有服务器，也不做转存。</span>
+      <span id="ba-source" class="mono"></span>
+    </div>
+  </div>
+</footer>
+<script type="module" src="../../assets/js/app.js"></script>
+</body>
+</html>

@@ -1,0 +1,15 @@
+{
+  "name": "boot-animation-community",
+  "private": true,
+  "type": "module",
+  "description": "开机动画社区：GitHub 上的目录数据 + 零服务器静态网站 + 自助投稿机器人",
+  "scripts": {
+    "build": "node tools/build-site.mjs",
+    "verify": "node tools/verify-site.mjs",
+    "check": "node tools/build-site.mjs && node tools/verify-site.mjs",
+    "serve": "node docs/serve.mjs"
+  },
+  "engines": {
+    "node": ">=20"
+  }
+}

@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+
+<title>兼容性与格式要求 · Boot Animation</title>
+<meta name="description" content="H.264 最稳，faststart 是硬要求">
+<link rel="canonical" href="https://nativedog1.github.io/-Boot-Animation-Community-/docs/compatibility/">
+
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="Boot Animation">
+<meta property="og:title" content="兼容性与格式要求 · Boot Animation">
+<meta property="og:description" content="H.264 最稳，faststart 是硬要求">
+<meta property="og:url" content="https://nativedog1.github.io/-Boot-Animation-Community-/docs/compatibility/">
+<meta property="og:locale" content="zh_CN">
+
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="兼容性与格式要求 · Boot Animation">
+<meta name="twitter:description" content="H.264 最稳，faststart 是硬要求">
+
+<meta name="theme-color" content="#0a0b0d">
+<link rel="icon" href="../../assets/favicon.svg" type="image/svg+xml">
+<link rel="stylesheet" href="../../assets/css/tokens.css">
+<link rel="stylesheet" href="../../assets/css/base.css">
+<link rel="stylesheet" href="../../assets/css/components.css">
+<script type="application/ld+json">{"@context":"https://schema.org","@type":"TechArticle","headline":"兼容性与格式要求","description":"H.264 最稳，faststart 是硬要求","url":"https://nativedog1.github.io/-Boot-Animation-Community-/docs/compatibility/","inLanguage":"zh-CN"}</script>
+</head>
+<body data-page="static">
+<a class="skip" href="#ba-main">跳到主内容</a>
+<header class="site-header">
+  <div class="site-header__inner">
+    <a class="brand" href="../../" aria-label="Boot Animation 首页">
+      <span class="brand__mark"><svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M4 6.5h16v11H4z" stroke="#fff" stroke-width="1.6"/><path d="M9.5 10.2v3.6l4.2-1.8z" fill="#fff"/></svg></span>
+      <span class="brand__text"><span class="brand__name">Boot Animation</span><span class="brand__sub">开机动画</span></span>
+    </a>
+    <nav class="nav" aria-label="主导航"><a class="nav__link" href="../../animations/">动画库</a><a class="nav__link" href="../../community/">社区</a><a class="nav__link" href="../../download/">下载</a><a class="nav__link" href="../../docs/" aria-current="page">文档</a><a class="nav__link" href="../../creators/">作者</a></nav>
+    <div class="header-actions">
+      <button class="search-trigger" id="ba-search" type="button" aria-label="搜索（Ctrl+K）">
+        <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5"/></svg>
+        <span class="search-trigger__text">搜索</span>
+        <span class="search-trigger__kbd"><kbd>Ctrl</kbd><kbd>K</kbd></span>
+      </button>
+      <a class="btn btn--primary btn--sm" href="../../download/">下载软件</a>
+      <button class="icon-btn burger" id="ba-burger" type="button" aria-label="打开菜单" aria-expanded="false" aria-controls="ba-mobile-nav">
+        <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" aria-hidden="true"><path d="M4 7h16"/><path d="M4 12h16"/><path d="M4 17h16"/></svg>
+      </button>
+    </div>
+  </div>
+</header>
+<nav class="mobile-nav" id="ba-mobile-nav" hidden aria-label="移动端导航"></nav>
+<main id="ba-main">
+<section class="section section--tight">
+  <div class="wrap">
+    <nav class="breadcrumb" aria-label="面包屑">
+      <a href="../../">首页</a><span class="breadcrumb__sep">/</span>
+      <a href="../../docs/">文档</a><span class="breadcrumb__sep">/</span><span>兼容性与格式要求</span>
+    </nav>
+    <div class="docs-layout">
+      <nav class="docs-nav" aria-label="文档目录"><h4>开始</h4><ul><li><a href="../../docs/getting-started/">开机动画是什么</a></li><li><a href="../../docs/installation/">安装与卸载</a></li></ul><h4>使用</h4><ul><li><a href="../../docs/importing-animations/">装一个社区动画</a></li><li><a href="../../docs/compatibility/" aria-current="page">兼容性与格式要求</a></li></ul><h4>制作与投稿</h4><ul><li><a href="../../docs/creating-animations/">做一个自己的动画</a></li><li><a href="../../docs/submission/">投稿到社区</a></li></ul><h4>排错与恢复</h4><ul><li><a href="../../docs/troubleshooting/">排错</a></li><li><a href="../../docs/recovery/">出问题怎么恢复</a></li><li><a href="../../docs/faq/">常见问题</a></li></ul></nav>
+      <article class="prose">
+        <h1>兼容性与格式要求</h1>
+        <p class="muted">H.264 最稳，faststart 是硬要求</p>
+        
+<p>客户端是 Windows 桌面程序，对视频格式有明确偏好。照下面的来最省事。</p>
+
+<h2>系统与依赖</h2>
+<dl class="facts">
+  <dt>支持</dt><dd>Windows 10 / 11，64 位（x64）</dd>
+  <dt>权限</dt><dd>不需要管理员</dd>
+  <dt>依赖</dt><dd>不需要装 .NET 运行时，用的是系统自带的 .NET Framework 4.x</dd>
+  <dt>内置片头</dt><dd>2560×1440、24fps，四段合计约 31.7 MB，已内嵌在程序里</dd>
+</dl>
+
+<h2>视频格式</h2>
+<table>
+  <thead>
+    <tr><th>格式</th><th>结果</th></tr>
+  </thead>
+  <tbody>
+    <tr><td>H.264 + AAC 的 mp4</td><td><strong>最稳，推荐</strong></td></tr>
+    <tr><td>HEVC（H.265）</td><td>可能只有声音，或者干脆黑屏</td></tr>
+    <tr><td>ProRes</td><td>同上，Windows 自带解码器不认</td></tr>
+    <tr><td>部分 mkv</td><td>可能只有声音或黑屏</td></tr>
+  </tbody>
+</table>
+
+<div class="callout callout--warn">
+  <div>
+    <p><strong>faststart 是硬要求。</strong>不加 <code>-movflags +faststart</code> 时索引表在文件末尾，播放器必须把整段读完才出画面 —— 用户看到的就是黑屏卡住。修一条已经做好的片子不用重新编码：<br><code>ffmpeg -i 原片.mp4 -c copy -movflags +faststart 修好的.mp4</code></p>
+  </div>
+</div>
+
+<h2>分辨率与体积</h2>
+<ul>
+  <li><strong>1440p（2560×1440）是社区主流</strong>，内置四段也是这个分辨率。</li>
+  <li>4K 能跑，但单个文件常常几十 MB，下载明显更慢；社区建议投稿出 1440p。</li>
+  <li>建议体积 ≤ 30 MB。社区硬上限 100 MB，超过会被机器人拒绝。</li>
+</ul>
+
+<h2>音频</h2>
+<p>可以带音轨，但客户端默认可能静音 —— 登录后突然出声，对很多人是打扰。内置四段都没有音轨。</p>
+
+<h2>播放参数</h2>
+<dl class="facts">
+  <dt>铺满</dt><dd><code>--fit cover</code>（默认）：铺满屏幕，可能裁掉边缘</dd>
+  <dt>完整显示</dt><dd><code>--fit contain</code>：完整显示，留黑边</dd>
+  <dt>不等登录</dt><dd><code>--play --seconds 5</code>：立刻试看 5 秒</dd>
+</dl>
+
+        <hr>
+        <div class="btn-row" style="justify-content:space-between">
+          <a class="btn" href="../../docs/submission/">← 投稿到社区</a>
+          <a class="btn" href="../../docs/troubleshooting/">排错 →</a>
+        </div>
+        <p class="muted small" style="margin-top:var(--s-4)">这篇没解决你的问题？去 <a class="link" href="https://github.com/NativeDog1/-Boot-Animation-Community-/issues/new" target="_blank" rel="noopener">仓库提 Issue</a>，或者先看 <a class="link" href="../../docs/troubleshooting/">排错</a> 与 <a class="link" href="../../docs/recovery/">恢复</a>。</p>
+      </article>
+    </div>
+  </div>
+</section>
+
+</main>
+<footer class="site-footer">
+  <div class="wrap">
+    <div class="site-footer__grid">
+      <div class="site-footer__col">
+        <h4>Boot Animation</h4>
+        <p class="muted small">YOUR BOOT. YOUR IDENTITY.<br>登录后播放几秒的开机片头，配一个公开的社区动画库。</p>
+      </div>
+      <div class="site-footer__col"><h4>产品</h4><ul><li><a href="../../download/">下载软件</a></li><li><a href="../../animations/">动画库</a></li><li><a href="../../community/">社区与投稿</a></li><li><a href="../../changelog/">更新日志</a></li></ul></div>
+      <div class="site-footer__col"><h4>文档</h4><ul><li><a href="../../docs/getting-started/">快速开始</a></li><li><a href="../../docs/installation/">安装与卸载</a></li><li><a href="../../docs/importing-animations/">装一个社区动画</a></li><li><a href="../../docs/recovery/">出问题怎么恢复</a></li></ul></div>
+      <div class="site-footer__col"><h4>社区</h4><ul><li><a href="https://github.com/NativeDog1/-Boot-Animation-Community-">数据仓库</a></li><li><a href="https://github.com/NativeDog1/-Boot-Animation-Community-/blob/main/SCHEMA.md">条目规范</a></li><li><a href="https://github.com/NativeDog1/-Boot-Animation-Community-/issues/new?template=submit-animation.yml">投稿</a></li><li><a href="https://github.com/NativeDog1/-Boot-Animation-Community-/issues/new?template=report.yml">举报内容</a></li></ul></div>
+    </div>
+    <div class="site-footer__bottom">
+      <span>数据来自 GitHub 仓库，视频由各自作者托管；本站没有服务器，也不做转存。</span>
+      <span id="ba-source" class="mono"></span>
+    </div>
+  </div>
+</footer>
+<script type="module" src="../../assets/js/app.js"></script>
+</body>
+</html>

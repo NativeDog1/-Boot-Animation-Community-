@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+
+<title>开机动画是什么 · Boot Animation</title>
+<meta name="description" content="登录后播放几秒的片头，不是改开机画面">
+<link rel="canonical" href="https://nativedog1.github.io/-Boot-Animation-Community-/docs/getting-started/">
+
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="Boot Animation">
+<meta property="og:title" content="开机动画是什么 · Boot Animation">
+<meta property="og:description" content="登录后播放几秒的片头，不是改开机画面">
+<meta property="og:url" content="https://nativedog1.github.io/-Boot-Animation-Community-/docs/getting-started/">
+<meta property="og:locale" content="zh_CN">
+
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="开机动画是什么 · Boot Animation">
+<meta name="twitter:description" content="登录后播放几秒的片头，不是改开机画面">
+
+<meta name="theme-color" content="#0a0b0d">
+<link rel="icon" href="../../assets/favicon.svg" type="image/svg+xml">
+<link rel="stylesheet" href="../../assets/css/tokens.css">
+<link rel="stylesheet" href="../../assets/css/base.css">
+<link rel="stylesheet" href="../../assets/css/components.css">
+<script type="application/ld+json">{"@context":"https://schema.org","@type":"TechArticle","headline":"开机动画是什么","description":"登录后播放几秒的片头，不是改开机画面","url":"https://nativedog1.github.io/-Boot-Animation-Community-/docs/getting-started/","inLanguage":"zh-CN"}</script>
+</head>
+<body data-page="static">
+<a class="skip" href="#ba-main">跳到主内容</a>
+<header class="site-header">
+  <div class="site-header__inner">
+    <a class="brand" href="../../" aria-label="Boot Animation 首页">
+      <span class="brand__mark"><svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M4 6.5h16v11H4z" stroke="#fff" stroke-width="1.6"/><path d="M9.5 10.2v3.6l4.2-1.8z" fill="#fff"/></svg></span>
+      <span class="brand__text"><span class="brand__name">Boot Animation</span><span class="brand__sub">开机动画</span></span>
+    </a>
+    <nav class="nav" aria-label="主导航"><a class="nav__link" href="../../animations/">动画库</a><a class="nav__link" href="../../community/">社区</a><a class="nav__link" href="../../download/">下载</a><a class="nav__link" href="../../docs/" aria-current="page">文档</a><a class="nav__link" href="../../creators/">作者</a></nav>
+    <div class="header-actions">
+      <button class="search-trigger" id="ba-search" type="button" aria-label="搜索（Ctrl+K）">
+        <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5"/></svg>
+        <span class="search-trigger__text">搜索</span>
+        <span class="search-trigger__kbd"><kbd>Ctrl</kbd><kbd>K</kbd></span>
+      </button>
+      <a class="btn btn--primary btn--sm" href="../../download/">下载软件</a>
+      <button class="icon-btn burger" id="ba-burger" type="button" aria-label="打开菜单" aria-expanded="false" aria-controls="ba-mobile-nav">
+        <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" aria-hidden="true"><path d="M4 7h16"/><path d="M4 12h16"/><path d="M4 17h16"/></svg>
+      </button>
+    </div>
+  </div>
+</header>
+<nav class="mobile-nav" id="ba-mobile-nav" hidden aria-label="移动端导航"></nav>
+<main id="ba-main">
+<section class="section section--tight">
+  <div class="wrap">
+    <nav class="breadcrumb" aria-label="面包屑">
+      <a href="../../">首页</a><span class="breadcrumb__sep">/</span>
+      <a href="../../docs/">文档</a><span class="breadcrumb__sep">/</span><span>开机动画是什么</span>
+    </nav>
+    <div class="docs-layout">
+      <nav class="docs-nav" aria-label="文档目录"><h4>开始</h4><ul><li><a href="../../docs/getting-started/" aria-current="page">开机动画是什么</a></li><li><a href="../../docs/installation/">安装与卸载</a></li></ul><h4>使用</h4><ul><li><a href="../../docs/importing-animations/">装一个社区动画</a></li><li><a href="../../docs/compatibility/">兼容性与格式要求</a></li></ul><h4>制作与投稿</h4><ul><li><a href="../../docs/creating-animations/">做一个自己的动画</a></li><li><a href="../../docs/submission/">投稿到社区</a></li></ul><h4>排错与恢复</h4><ul><li><a href="../../docs/troubleshooting/">排错</a></li><li><a href="../../docs/recovery/">出问题怎么恢复</a></li><li><a href="../../docs/faq/">常见问题</a></li></ul></nav>
+      <article class="prose">
+        <h1>开机动画是什么</h1>
+        <p class="muted">登录后播放几秒的片头，不是改开机画面</p>
+        
+<p>开机动画（BootAnimation）是一个 Windows 小工具：<strong>登录完成之后立刻全屏播放几秒片头，播完自动消失</strong>。它<strong>不是</strong>修改 Windows 开机徽标或开机画面的工具，也不参与开机自检与登录过程 —— 你在开机自检和登录界面上看到的东西，不会因为它有任何改变。</p>
+
+<div class="callout callout--info">
+  <div>
+    <p><strong>一句话区分：</strong>「开机画面」是系统在登录之前放的；本软件是<strong>桌面出来之后</strong>才播放的片头。所以开机时的徽标、登录界面的样子，都不归它管。</p>
+  </div>
+</div>
+
+<h2>它到底做了什么</h2>
+<ul>
+  <li>把播放器复制到 <code>%LOCALAPPDATA%ProgramsBootAnimation</code>。</li>
+  <li>在 <code>HKCUSoftwareMicrosoftWindowsCurrentVersionRun</code> 写一个自启键值 <code>BootAnimation</code>。</li>
+  <li>把选片、日志、解出的视频缓存写到 <code>%LOCALAPPDATA%BootAnimation</code>。</li>
+</ul>
+<p>它<strong>不改系统级设置</strong>：不改登录 shell、不装驱动、不碰系统文件；安装、运行、卸载都不需要管理员权限。</p>
+
+<h2>适合谁</h2>
+<ul>
+  <li>想让自己的机器在每次登录后有一段片头的人。</li>
+  <li>自己做了动画、想分享给别人一键安装的人。</li>
+</ul>
+
+<h2>内置的四段片头</h2>
+<p>四段视频<strong>已经内嵌在程序里</strong>，装完不用再下载素材，离线也能用。不带参数双击程序就会弹出选片窗口。</p>
+<dl class="facts">
+  <dt>brand</dt><dd>DeepSeek 品牌片头 · 4.62 MB</dd>
+  <dt>cyberpunk</dt><dd>DeepSeek 赛博朋克片头 · 6.61 MB</dd>
+  <dt>awakening</dt><dd>DeepSeek 数字角色苏醒 · 10.12 MB</dd>
+  <dt>startup</dt><dd>DeepSeek 启动问题 · 10.32 MB</dd>
+</dl>
+
+<h2>和社区的关系</h2>
+<p>本站是社区目录。你可以<strong>浏览、预览、直接下载</strong>别人的动画；装了客户端之后，还能点「装到我的开机动画」一键安装。目录里只存元数据、视频直链和校验哈希，视频由投稿者自己托管，我们不转存。</p>
+<div class="callout callout--ok">
+  <div>
+    <p>目录里的内容<strong>不会被自动装上</strong>：只有你主动选择并确认安装的条目才会被下载和播放。</p>
+  </div>
+</div>
+
+<p><span class="muted small">当前版本 1.0.0，以 Releases 页面发布的版本为准。</span></p>
+
+        <hr>
+        <div class="btn-row" style="justify-content:space-between">
+          <span></span>
+          <a class="btn" href="../../docs/installation/">安装与卸载 →</a>
+        </div>
+        <p class="muted small" style="margin-top:var(--s-4)">这篇没解决你的问题？去 <a class="link" href="https://github.com/NativeDog1/-Boot-Animation-Community-/issues/new" target="_blank" rel="noopener">仓库提 Issue</a>，或者先看 <a class="link" href="../../docs/troubleshooting/">排错</a> 与 <a class="link" href="../../docs/recovery/">恢复</a>。</p>
+      </article>
+    </div>
+  </div>
+</section>
+
+</main>
+<footer class="site-footer">
+  <div class="wrap">
+    <div class="site-footer__grid">
+      <div class="site-footer__col">
+        <h4>Boot Animation</h4>
+        <p class="muted small">YOUR BOOT. YOUR IDENTITY.<br>登录后播放几秒的开机片头，配一个公开的社区动画库。</p>
+      </div>
+      <div class="site-footer__col"><h4>产品</h4><ul><li><a href="../../download/">下载软件</a></li><li><a href="../../animations/">动画库</a></li><li><a href="../../community/">社区与投稿</a></li><li><a href="../../changelog/">更新日志</a></li></ul></div>
+      <div class="site-footer__col"><h4>文档</h4><ul><li><a href="../../docs/getting-started/">快速开始</a></li><li><a href="../../docs/installation/">安装与卸载</a></li><li><a href="../../docs/importing-animations/">装一个社区动画</a></li><li><a href="../../docs/recovery/">出问题怎么恢复</a></li></ul></div>
+      <div class="site-footer__col"><h4>社区</h4><ul><li><a href="https://github.com/NativeDog1/-Boot-Animation-Community-">数据仓库</a></li><li><a href="https://github.com/NativeDog1/-Boot-Animation-Community-/blob/main/SCHEMA.md">条目规范</a></li><li><a href="https://github.com/NativeDog1/-Boot-Animation-Community-/issues/new?template=submit-animation.yml">投稿</a></li><li><a href="https://github.com/NativeDog1/-Boot-Animation-Community-/issues/new?template=report.yml">举报内容</a></li></ul></div>
+    </div>
+    <div class="site-footer__bottom">
+      <span>数据来自 GitHub 仓库，视频由各自作者托管；本站没有服务器，也不做转存。</span>
+      <span id="ba-source" class="mono"></span>
+    </div>
+  </div>
+</footer>
+<script type="module" src="../../assets/js/app.js"></script>
+</body>
+</html>

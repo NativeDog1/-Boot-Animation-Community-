@@ -1,0 +1,101 @@
+/* ============================================================================
+   Boot Animation Design Language — 设计令牌（唯一来源）
+   ----------------------------------------------------------------------------
+   视觉方向：Premium OS + 硬件 + 开发者工具。石墨黑底、克制的品牌红、冷白文字、
+   极轻的金属高光。**刻意不做**：霓虹、RGB、扫描线、glitch、大面积发光玻璃。
+
+   所有页面只允许引用这里的变量，不允许各页自己写颜色/圆角/阴影 —— 这是
+   「不每个页面一套 CSS」的前提。
+   ========================================================================== */
+
+:root {
+  /* —— 表面：从最深的页底到最亮的浮起面（石墨梯度） —— */
+  --bg:            #0a0b0d;   /* 页面底 */
+  --surface-1:     #101216;   /* 卡片 */
+  --surface-2:     #16181d;   /* 输入框 / 次级面 */
+  --surface-3:     #1d2027;   /* hover / 选中 */
+  --surface-raised:#21242c;   /* 弹层 */
+
+  /* —— 描边：靠 alpha 白，而不是固定灰，才能在任何面上都对 —— */
+  --line:          rgba(255, 255, 255, .08);
+  --line-strong:   rgba(255, 255, 255, .14);
+  --line-brand:    rgba(225, 29, 46, .45);
+
+  /* —— 文字：冷白三级 —— */
+  --fg:            #e9ebef;
+  --fg-2:          #a8afbd;
+  --fg-3:          #6e7686;
+
+  /* —— 品牌红：只用于强调、主 CTA、当前状态。绝不整页铺 —— */
+  --brand:         #e11d2e;
+  --brand-hover:   #f23346;
+  --brand-press:   #c2141f;
+  --brand-ink:     #ffffff;
+  --brand-dim:     rgba(225, 29, 46, .12);
+  --brand-line:    rgba(225, 29, 46, .38);
+
+  /* —— 语义色（状态设计：loading / empty / error / offline / warn / ok） —— */
+  --ok:            #3fb950;
+  --ok-dim:        rgba(63, 185, 80, .12);
+  --warn:          #d29922;
+  --warn-dim:      rgba(210, 153, 34, .12);
+  --danger:        #f85149;
+  --danger-dim:    rgba(248, 81, 73, .12);
+  --info:          #7ea0ff;
+  --info-dim:      rgba(126, 160, 255, .12);
+
+  /* —— 金属高光：1px 顶部内高光 = 硬件感，比玻璃拟态便宜且不糊 —— */
+  --metal-top:     inset 0 1px 0 rgba(255, 255, 255, .05);
+
+  /* —— 圆角 —— */
+  --r-1: 6px;
+  --r-2: 10px;
+  --r-3: 14px;
+  --r-4: 20px;
+  --r-pill: 999px;
+
+  /* —— 阴影（越靠上层越深，不用彩色阴影） —— */
+  --sh-1: 0 1px 2px rgba(0, 0, 0, .4);
+  --sh-2: 0 8px 24px rgba(0, 0, 0, .45);
+  --sh-3: 0 24px 64px rgba(0, 0, 0, .6);
+
+  /* —— 间距刻度（8 的倍数，允许 4 用于紧凑处） —— */
+  --s-1: 4px;  --s-2: 8px;  --s-3: 12px; --s-4: 16px;
+  --s-5: 24px; --s-6: 32px; --s-7: 48px; --s-8: 64px; --s-9: 96px;
+
+  /* —— 字体：系统栈，中文优先微软雅黑；等宽用于 id/sha256/命令 —— */
+  --font: "Microsoft YaHei", -apple-system, BlinkMacSystemFont, "Segoe UI",
+          system-ui, "PingFang SC", "Hiragino Sans GB", sans-serif;
+  --mono: ui-monospace, "Cascadia Mono", "SF Mono", Consolas, "Liberation Mono", monospace;
+
+  /* —— 流体字级：手机到桌面一套，不用断点改字号 —— */
+  --t-hero:  clamp(34px, 7vw, 68px);
+  --t-h1:    clamp(26px, 4.4vw, 40px);
+  --t-h2:    clamp(20px, 3vw, 28px);
+  --t-h3:    17px;
+  --t-body:  15px;
+  --t-sm:    13.5px;
+  --t-xs:    12px;
+
+  /* —— 动效：只服务导航/反馈/层级。全局受 prefers-reduced-motion 约束 —— */
+  --dur-1: 120ms;
+  --dur-2: 200ms;
+  --dur-3: 320ms;
+  --ease:  cubic-bezier(.2, .8, .2, 1);
+
+  /* —— 布局 —— */
+  --wrap:   1200px;
+  --wrap-narrow: 820px;
+  --header-h: 60px;
+}
+
+/* 浅色不实现：这是一个深色优先的产品，不做半套浅色主题。
+   但如果用户系统是浅色 + 强制对比，至少保证文字可读。 */
+@media (prefers-contrast: more) {
+  :root {
+    --line: rgba(255, 255, 255, .22);
+    --line-strong: rgba(255, 255, 255, .34);
+    --fg-2: #c6ccd8;
+    --fg-3: #98a1b1;
+  }
+}

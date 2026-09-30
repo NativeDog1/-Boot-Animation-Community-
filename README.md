@@ -74,6 +74,38 @@ submitted: 2026-09-29
 - 维护者在核实后**直接下架**（删除条目文件 + 刷新索引），必要时封禁投稿者
 - **投稿即表示你声明拥有该视频的权利或已获得授权**，并在条目里写明 `license`
 
+## 网站（`docs/`，GitHub Pages 从这里发布）
+
+网站是**预渲染的静态站**，没有服务器、没有框架、没有构建依赖：
+
+```
+data/index.json  ──┐
+docs/content/docs.mjs ──┤
+                   └─> node tools/build-site.mjs ──> docs/**（真页面）+ sitemap.xml + robots.txt + 搜索索引
+```
+
+为什么预渲染而不是纯客户端路由：每条动画要有一个**真文件**（`/animations/<id>/`），
+这样刷新不会 404、每个页面有自己的 `<title>`/canonical/OG/JSON-LD（SEO 与分享卡片才成立）、
+禁用 JS 也能把目录读完（JS 只做筛选、预览、深链这些增强）。
+
+| 命令 | 作用 |
+|---|---|
+| `npm run build` | 读数据与文档内容，重新生成 `docs/` 下所有页面 |
+| `npm run verify` | 自检：元信息是否齐全、有没有坏链、有没有伪造统计、有没有踩事实红线 |
+| `npm run serve` | 本地预览（`http://127.0.0.1:8123`），复刻 Pages 的目录解析行为 |
+| `npm run check` | build + verify（投稿机器人上跑的就是这个） |
+
+**投稿上架时站点会自动重建**：机器人写完条目后会跑 `tools/build-site.mjs` + `tools/verify-site.mjs`，
+把 `data/` 和 `docs/` 一起提交 —— 所以不会出现"目录里有、页面没有"的分裂状态；
+校验不通过就不上架。
+
+网站从不直接 fetch GitHub 的 URL：所有取数都经过 `docs/assets/js/repository.js` 里的
+`AnimationRepository` 接口（当前实现是读仓库里的 JSON；将来要接 Cloudflare Workers / Supabase
+之类，换一个实现类即可，页面代码一行都不用改）。
+
+> 想要干净 URL 又不想依赖服务端渲染，这是 GitHub Pages 上的正解：**把页面在 CI 里生成出来**，
+> 而不是让浏览器在运行时拼。代价是页面数随动画条数增长 —— 对几千条以内完全没问题。
+
 ## 目录索引
 
 `data/index.json` 由机器人从 `data/animations/*.yml` 生成，**不要手改**。

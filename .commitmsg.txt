@@ -1,0 +1,56 @@
+refactor(site): 产品级重构 —— 从单页目录浏览到多页社区门户
+
+网站（docs/）从「一个 index.html + 弹窗」改成预渲染的多页静态站：仍然零服务器、
+零依赖、只用 GitHub 的免费基础设施，但有了首页、动画库、详情页、社区、作者、
+下载、文档与全局搜索。
+
+## 新增架构
+
+- tools/build-site.mjs    读 data/index.json + docs/content/docs.mjs → 20 个真页面
+                          + sitemap.xml + robots.txt + 搜索索引（零依赖、零网络）
+- tools/verify-site.mjs   自检：元信息齐全 / 坏链 / 伪造统计 / 事实红线
+- docs/assets/js/repository.js   AnimationRepository 接口 —— UI 不再直接 fetch GitHub
+- docs/assets/js/catalog.js      目录纯逻辑（筛选/排序/格式化/搜索索引/投稿校验）
+- docs/assets/css/{tokens,base,components}.css   Design System 三层
+
+为什么预渲染而不是纯客户端路由：每条动画要有真文件（刷新不 404）、每页要有自己的
+title/canonical/OG/JSON-LD（SEO 与分享卡片才成立）、禁用 JS 也要能读完目录。
+
+## 新增页面
+
+/animations/ · /animations/<id>/ · /community/ · /creators/ · /creators/<author>/
+/download/ · /docs/ + 9 篇文档 · /about/ · /changelog/ · 404.html
+
+## 新增功能
+
+- Ctrl+K（或 /）全局搜索：动画 + 作者 + 标签 + 文档
+- 筛选（标签/分辨率/时长）条件写进 URL —— 可分享、可后退
+- 视频点了才设 src；卡片桌面端悬停才预览；全站同时只播一个
+- 详情页深链唤起客户端并检测是否真的唤起；没唤起给出两条可行退路
+- loading / empty / error / offline / 骨架屏 五种状态
+- SEO：每页独立元信息 + JSON-LD + sitemap + robots；404 用 <base> 兜任意深度
+- 完整响应式（1100/900/640 三个断点各自重排，不是整体缩小）+ 键盘可达 + reduced-motion
+
+## 数据契约不变
+
+data/index.json 的格式**一个字没改** —— 软件客户端读它照常工作，新增字段全部可选。
+新增 data/software.json：软件版本清单（下载页读它；发新版只改这一个文件，
+downloadUrl 用 releases/latest/download/<固定文件名> 这个稳定入口）。
+
+## 投稿机器人
+
+上架时现在会同时重建网站并跑自检，把 data/ 与 docs/ 放在同一次提交里；
+自检不通过就**不上架** —— 避免出现「目录里有、页面上没有」的分裂状态。
+
+## 删除
+
+- docs/style.css（128 行皮肤，由 Design System 取代）
+- 旧单页 docs/app.js（拆成 catalog.js + ui/*；docs/app.js 保留为兼容垫片，
+  原有导出一个不少）
+
+## 顺带
+
+- install.ps1 补齐 bootanim:// 协议注册（此前只有安装包 Setup.cs 注册）：
+  走脚本安装的机器现在也能用网站的「用开机动画打开」
+- data/software.json 指向已发布的 v1.0.0（独立仓库 NativeDog1/boot-animation-app
+  + Release 附件 BootAnimation-Setup.exe，32.41 MB）

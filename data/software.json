@@ -1,0 +1,25 @@
+{
+  "_comment": "软件版本清单：网站与客户端都读它来回答「最新版本是哪个」，所以发新版只改这个文件，不用动任何前端代码。version 为 null = 尚未发布（网站会如实说明并给出自行构建的步骤，而不是给一个点了 404 的链接）。downloadUrl 用 releases/latest/download/<固定文件名> 这个稳定入口 —— 以后发 v1.1.0 只要附件还叫 BootAnimation-Setup.exe，这里一个字都不用改。",
+  "name": "Boot Animation 开机动画",
+  "version": "1.0.0",
+  "releaseDate": "2026-09-30",
+  "size": 33983488,
+  "sha256": "b603899f05eb9bd835c856a40f76f040fa9eeaf3af8c89ecfb7cf59c8a521c8a",
+  "downloadUrl": "https://github.com/NativeDog1/boot-animation-app/releases/latest/download/BootAnimation-Setup.exe",
+  "releaseUrl": "https://github.com/NativeDog1/boot-animation-app/releases/tag/v1.0.0",
+  "changelogUrl": "https://github.com/NativeDog1/boot-animation-app/releases",
+  "repo": "https://github.com/NativeDog1/boot-animation-app",
+  "signed": false,
+  "smartScreen": true,
+  "requirements": {
+    "os": "Windows 10 / 11 (x64)",
+    "admin": false,
+    "runtime": "不需要 .NET 运行时（用系统自带的 .NET Framework 4.x）"
+  },
+  "install": {
+    "dir": "%LOCALAPPDATA%\\Programs\\BootAnimation\\",
+    "runKey": "HKCU\\Software\\Microsoft\\Windows\\CurrentVersion\\Run\\BootAnimation",
+    "dataDir": "%LOCALAPPDATA%\\BootAnimation\\",
+    "touchesBoot": false
+  }
+}

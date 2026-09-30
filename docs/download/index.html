@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+
+<title>下载 · Boot Animation</title>
+<meta name="description" content="下载开机动画（Windows 10 / 11）。不需要管理员权限，不需要安装 .NET 运行时。">
+<link rel="canonical" href="https://nativedog1.github.io/-Boot-Animation-Community-/download/">
+
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="Boot Animation">
+<meta property="og:title" content="下载 · Boot Animation">
+<meta property="og:description" content="下载开机动画（Windows 10 / 11）。不需要管理员权限，不需要安装 .NET 运行时。">
+<meta property="og:url" content="https://nativedog1.github.io/-Boot-Animation-Community-/download/">
+<meta property="og:locale" content="zh_CN">
+
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="下载 · Boot Animation">
+<meta name="twitter:description" content="下载开机动画（Windows 10 / 11）。不需要管理员权限，不需要安装 .NET 运行时。">
+
+<meta name="theme-color" content="#0a0b0d">
+<link rel="icon" href="../assets/favicon.svg" type="image/svg+xml">
+<link rel="stylesheet" href="../assets/css/tokens.css">
+<link rel="stylesheet" href="../assets/css/base.css">
+<link rel="stylesheet" href="../assets/css/components.css">
+<script type="application/ld+json">{"@context":"https://schema.org","@type":"SoftwareApplication","name":"Boot Animation 开机动画","applicationCategory":"UtilitiesApplication","operatingSystem":"Windows 10, Windows 11","offers":{"@type":"Offer","price":"0","priceCurrency":"CNY"},"url":"https://nativedog1.github.io/-Boot-Animation-Community-/download/","softwareHelp":"https://nativedog1.github.io/-Boot-Animation-Community-/docs/"}</script>
+</head>
+<body data-page="download">
+<a class="skip" href="#ba-main">跳到主内容</a>
+<header class="site-header">
+  <div class="site-header__inner">
+    <a class="brand" href="../" aria-label="Boot Animation 首页">
+      <span class="brand__mark"><svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M4 6.5h16v11H4z" stroke="#fff" stroke-width="1.6"/><path d="M9.5 10.2v3.6l4.2-1.8z" fill="#fff"/></svg></span>
+      <span class="brand__text"><span class="brand__name">Boot Animation</span><span class="brand__sub">开机动画</span></span>
+    </a>
+    <nav class="nav" aria-label="主导航"><a class="nav__link" href="../animations/">动画库</a><a class="nav__link" href="../community/">社区</a><a class="nav__link" href="../download/" aria-current="page">下载</a><a class="nav__link" href="../docs/">文档</a><a class="nav__link" href="../creators/">作者</a></nav>
+    <div class="header-actions">
+      <button class="search-trigger" id="ba-search" type="button" aria-label="搜索（Ctrl+K）">
+        <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5"/></svg>
+        <span class="search-trigger__text">搜索</span>
+        <span class="search-trigger__kbd"><kbd>Ctrl</kbd><kbd>K</kbd></span>
+      </button>
+      <a class="btn btn--primary btn--sm" href="../download/">下载软件</a>
+      <button class="icon-btn burger" id="ba-burger" type="button" aria-label="打开菜单" aria-expanded="false" aria-controls="ba-mobile-nav">
+        <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" aria-hidden="true"><path d="M4 7h16"/><path d="M4 12h16"/><path d="M4 17h16"/></svg>
+      </button>
+    </div>
+  </div>
+</header>
+<nav class="mobile-nav" id="ba-mobile-nav" hidden aria-label="移动端导航"></nav>
+<main id="ba-main">
+<section class="section section--tight">
+  <div class="wrap">
+    <nav class="breadcrumb" aria-label="面包屑"><a href="../">首页</a><span class="breadcrumb__sep">/</span><span>下载</span></nav>
+    <div class="section__head">
+      <div>
+        <h1 class="section__title">下载开机动画</h1>
+        <p class="section__sub">Windows 10 / 11（x64）· 不需要管理员权限 · 不需要安装 .NET 运行时</p>
+      </div>
+    </div>
+    <div id="ba-dl-version" style="margin-bottom:var(--s-4)"></div>
+    <div class="btn-row" id="ba-dl-actions" style="margin-bottom:var(--s-6)"></div>
+    <div style="display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:var(--s-6);align-items:start" class="detail-layout">
+      <div>
+        <h2>版本与运行环境</h2>
+        <div id="ba-dl-facts"></div>
+      </div>
+      <div>
+        <h2>安装前需要知道</h2>
+        <div class="callout callout--warn">
+          <div><b>第一次运行会有 SmartScreen 提示。</b> 安装包目前没有代码签名，Windows 会显示「Windows 已保护你的电脑」。点「更多信息 → 仍要运行」即可。这是微软的信任机制，不是检测到了病毒。</div>
+        </div>
+        <div class="callout callout--info">
+          <div><b>它只动三个地方，都不要管理员：</b> 程序目录、一条 <code>HKCU</code> 自启键值、以及一个数据目录（选片与日志，卸载时保留）。不改引导、不改登录外壳、不装驱动。</div>
+        </div>
+        <div id="ba-dl-notes"></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+</main>
+<footer class="site-footer">
+  <div class="wrap">
+    <div class="site-footer__grid">
+      <div class="site-footer__col">
+        <h4>Boot Animation</h4>
+        <p class="muted small">YOUR BOOT. YOUR IDENTITY.<br>登录后播放几秒的开机片头，配一个公开的社区动画库。</p>
+      </div>
+      <div class="site-footer__col"><h4>产品</h4><ul><li><a href="../download/">下载软件</a></li><li><a href="../animations/">动画库</a></li><li><a href="../community/">社区与投稿</a></li><li><a href="../changelog/">更新日志</a></li></ul></div>
+      <div class="site-footer__col"><h4>文档</h4><ul><li><a href="../docs/getting-started/">快速开始</a></li><li><a href="../docs/installation/">安装与卸载</a></li><li><a href="../docs/importing-animations/">装一个社区动画</a></li><li><a href="../docs/recovery/">出问题怎么恢复</a></li></ul></div>
+      <div class="site-footer__col"><h4>社区</h4><ul><li><a href="https://github.com/NativeDog1/-Boot-Animation-Community-">数据仓库</a></li><li><a href="https://github.com/NativeDog1/-Boot-Animation-Community-/blob/main/SCHEMA.md">条目规范</a></li><li><a href="https://github.com/NativeDog1/-Boot-Animation-Community-/issues/new?template=submit-animation.yml">投稿</a></li><li><a href="https://github.com/NativeDog1/-Boot-Animation-Community-/issues/new?template=report.yml">举报内容</a></li></ul></div>
+    </div>
+    <div class="site-footer__bottom">
+      <span>数据来自 GitHub 仓库，视频由各自作者托管；本站没有服务器，也不做转存。</span>
+      <span id="ba-source" class="mono"></span>
+    </div>
+  </div>
+</footer>
+<script type="module" src="../assets/js/app.js"></script>
+</body>
+</html>

@@ -1,0 +1,4 @@
+User-agent: *
+Allow: /
+
+Sitemap: https://nativedog1.github.io/-Boot-Animation-Community-/sitemap.xml

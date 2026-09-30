@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+
+<title>投稿到社区 · Boot Animation</title>
+<meta name="description" content="填一个 Issue，机器人校验后自动上架">
+<link rel="canonical" href="https://nativedog1.github.io/-Boot-Animation-Community-/docs/submission/">
+
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="Boot Animation">
+<meta property="og:title" content="投稿到社区 · Boot Animation">
+<meta property="og:description" content="填一个 Issue，机器人校验后自动上架">
+<meta property="og:url" content="https://nativedog1.github.io/-Boot-Animation-Community-/docs/submission/">
+<meta property="og:locale" content="zh_CN">
+
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="投稿到社区 · Boot Animation">
+<meta name="twitter:description" content="填一个 Issue，机器人校验后自动上架">
+
+<meta name="theme-color" content="#0a0b0d">
+<link rel="icon" href="../../assets/favicon.svg" type="image/svg+xml">
+<link rel="stylesheet" href="../../assets/css/tokens.css">
+<link rel="stylesheet" href="../../assets/css/base.css">
+<link rel="stylesheet" href="../../assets/css/components.css">
+<script type="application/ld+json">{"@context":"https://schema.org","@type":"TechArticle","headline":"投稿到社区","description":"填一个 Issue，机器人校验后自动上架","url":"https://nativedog1.github.io/-Boot-Animation-Community-/docs/submission/","inLanguage":"zh-CN"}</script>
+</head>
+<body data-page="static">
+<a class="skip" href="#ba-main">跳到主内容</a>
+<header class="site-header">
+  <div class="site-header__inner">
+    <a class="brand" href="../../" aria-label="Boot Animation 首页">
+      <span class="brand__mark"><svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M4 6.5h16v11H4z" stroke="#fff" stroke-width="1.6"/><path d="M9.5 10.2v3.6l4.2-1.8z" fill="#fff"/></svg></span>
+      <span class="brand__text"><span class="brand__name">Boot Animation</span><span class="brand__sub">开机动画</span></span>
+    </a>
+    <nav class="nav" aria-label="主导航"><a class="nav__link" href="../../animations/">动画库</a><a class="nav__link" href="../../community/">社区</a><a class="nav__link" href="../../download/">下载</a><a class="nav__link" href="../../docs/" aria-current="page">文档</a><a class="nav__link" href="../../creators/">作者</a></nav>
+    <div class="header-actions">
+      <button class="search-trigger" id="ba-search" type="button" aria-label="搜索（Ctrl+K）">
+        <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5"/></svg>
+        <span class="search-trigger__text">搜索</span>
+        <span class="search-trigger__kbd"><kbd>Ctrl</kbd><kbd>K</kbd></span>
+      </button>
+      <a class="btn btn--primary btn--sm" href="../../download/">下载软件</a>
+      <button class="icon-btn burger" id="ba-burger" type="button" aria-label="打开菜单" aria-expanded="false" aria-controls="ba-mobile-nav">
+        <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" aria-hidden="true"><path d="M4 7h16"/><path d="M4 12h16"/><path d="M4 17h16"/></svg>
+      </button>
+    </div>
+  </div>
+</header>
+<nav class="mobile-nav" id="ba-mobile-nav" hidden aria-label="移动端导航"></nav>
+<main id="ba-main">
+<section class="section section--tight">
+  <div class="wrap">
+    <nav class="breadcrumb" aria-label="面包屑">
+      <a href="../../">首页</a><span class="breadcrumb__sep">/</span>
+      <a href="../../docs/">文档</a><span class="breadcrumb__sep">/</span><span>投稿到社区</span>
+    </nav>
+    <div class="docs-layout">
+      <nav class="docs-nav" aria-label="文档目录"><h4>开始</h4><ul><li><a href="../../docs/getting-started/">开机动画是什么</a></li><li><a href="../../docs/installation/">安装与卸载</a></li></ul><h4>使用</h4><ul><li><a href="../../docs/importing-animations/">装一个社区动画</a></li><li><a href="../../docs/compatibility/">兼容性与格式要求</a></li></ul><h4>制作与投稿</h4><ul><li><a href="../../docs/creating-animations/">做一个自己的动画</a></li><li><a href="../../docs/submission/" aria-current="page">投稿到社区</a></li></ul><h4>排错与恢复</h4><ul><li><a href="../../docs/troubleshooting/">排错</a></li><li><a href="../../docs/recovery/">出问题怎么恢复</a></li><li><a href="../../docs/faq/">常见问题</a></li></ul></nav>
+      <article class="prose">
+        <h1>投稿到社区</h1>
+        <p class="muted">填一个 Issue，机器人校验后自动上架</p>
+        
+<p>投稿是自助的：填一个 Issue，机器人自动校验，通过就上架。目录<strong>不做前置人工审核</strong>，采取「自助投稿 + 事后处置」。</p>
+
+<ol class="steps">
+  <li><strong>打开 Issues → 新建 →「投稿开机动画」。</strong></li>
+  <li><strong>把 mp4 拖进「视频」框。</strong>GitHub 会自己上传并把链接填好；也可以直接贴一个 https 直链。名称留空就用文件名，标签可以留空。</li>
+  <li><strong>选授权方式、填 nsfw、勾两条声明。</strong><code>nsfw</code> 是<strong>必填</strong> —— 漏填会导致条目校验失败，而不是被当成 false。客户端默认隐藏 <code>nsfw: true</code> 的条目，用户可在设置里打开。</li>
+  <li><strong>等机器人校验。</strong>它会检查必填字段、视频直链是否可达、文件大小与格式，并核对哈希。</li>
+  <li><strong>看结果：</strong>通过 → 自动生成条目文件、刷新 <code>index.json</code>、合并进目录，并在 Issue 里回复「已上架」；不通过 → 在 Issue 里列出缺哪一项，改好重新提交即可。</li>
+</ol>
+
+<h2>视频放哪</h2>
+<dl class="facts">
+  <dt>推荐</dt><dd>自己仓库的 Releases，每个文件最大 2 GB，免费。直链形如 <code>https://github.com/&lt;你&gt;/&lt;仓库&gt;/releases/download/&lt;tag&gt;/&lt;文件&gt;.mp4</code></dd>
+  <dt>也可以</dt><dd>任何稳定的 https 直链：对象存储、你自己的 CDN</dd>
+  <dt>不合格</dt><dd>网盘分享页。客户端只认直链，不解析网页</dd>
+</dl>
+
+<div class="callout callout--info">
+  <div>
+    <p>预览图是必填字段，但<strong>你不用自己准备</strong>：机器人会从视频里挑最亮的一帧截出来并提交进仓库。用户下载前看到的就是它。</p>
+  </div>
+</div>
+
+<h2>硬性要求（机器人会卡）</h2>
+<ul>
+  <li><code>video</code> 和 <code>preview</code> 必须是 <strong>https 直链</strong>。</li>
+  <li><code>sha256</code> 必须与文件完全一致 —— 这是唯一的安全校验手段，<strong>改了视频就必须改哈希</strong>。</li>
+  <li>体积上限 100 MB、时长上限 30 秒；社区建议 1440p、30 MB 以内。</li>
+  <li>投稿即表示你声明拥有该视频的权利或已获得授权，并在条目里写明 <code>license</code>（例如 CC-BY-4.0、CC0-1.0）。</li>
+</ul>
+
+<h2>举报与下架</h2>
+<p>任何人都可以对任何条目提 Issue（选「举报」模板），写明条目 id 与理由。维护者核实后会<strong>直接下架</strong>（删除条目文件 + 刷新索引），必要时封禁投稿者。内容不得含违法、色情、暴力或仇恨内容。</p>
+<p><span class="muted small"><code>data/index.json</code> 由机器人从条目文件生成，不要手改；条目格式的任何变更都要保证向后兼容，新字段可选。</span></p>
+
+        <hr>
+        <div class="btn-row" style="justify-content:space-between">
+          <a class="btn" href="../../docs/creating-animations/">← 做一个自己的动画</a>
+          <a class="btn" href="../../docs/compatibility/">兼容性与格式要求 →</a>
+        </div>
+        <p class="muted small" style="margin-top:var(--s-4)">这篇没解决你的问题？去 <a class="link" href="https://github.com/NativeDog1/-Boot-Animation-Community-/issues/new" target="_blank" rel="noopener">仓库提 Issue</a>，或者先看 <a class="link" href="../../docs/troubleshooting/">排错</a> 与 <a class="link" href="../../docs/recovery/">恢复</a>。</p>
+      </article>
+    </div>
+  </div>
+</section>
+
+</main>
+<footer class="site-footer">
+  <div class="wrap">
+    <div class="site-footer__grid">
+      <div class="site-footer__col">
+        <h4>Boot Animation</h4>
+        <p class="muted small">YOUR BOOT. YOUR IDENTITY.<br>登录后播放几秒的开机片头，配一个公开的社区动画库。</p>
+      </div>
+      <div class="site-footer__col"><h4>产品</h4><ul><li><a href="../../download/">下载软件</a></li><li><a href="../../animations/">动画库</a></li><li><a href="../../community/">社区与投稿</a></li><li><a href="../../changelog/">更新日志</a></li></ul></div>
+      <div class="site-footer__col"><h4>文档</h4><ul><li><a href="../../docs/getting-started/">快速开始</a></li><li><a href="../../docs/installation/">安装与卸载</a></li><li><a href="../../docs/importing-animations/">装一个社区动画</a></li><li><a href="../../docs/recovery/">出问题怎么恢复</a></li></ul></div>
+      <div class="site-footer__col"><h4>社区</h4><ul><li><a href="https://github.com/NativeDog1/-Boot-Animation-Community-">数据仓库</a></li><li><a href="https://github.com/NativeDog1/-Boot-Animation-Community-/blob/main/SCHEMA.md">条目规范</a></li><li><a href="https://github.com/NativeDog1/-Boot-Animation-Community-/issues/new?template=submit-animation.yml">投稿</a></li><li><a href="https://github.com/NativeDog1/-Boot-Animation-Community-/issues/new?template=report.yml">举报内容</a></li></ul></div>
+    </div>
+    <div class="site-footer__bottom">
+      <span>数据来自 GitHub 仓库，视频由各自作者托管；本站没有服务器，也不做转存。</span>
+      <span id="ba-source" class="mono"></span>
+    </div>
+  </div>
+</footer>
+<script type="module" src="../../assets/js/app.js"></script>
+</body>
+</html>

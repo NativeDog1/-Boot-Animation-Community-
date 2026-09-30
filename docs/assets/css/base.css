@@ -1,0 +1,171 @@
+/* ============================================================================
+   base.css — 重置 + 排版 + 全局可达性。只依赖 tokens.css 的变量。
+   ========================================================================== */
+
+*, *::before, *::after { box-sizing: border-box; }
+
+html {
+  -webkit-text-size-adjust: 100%;
+  scroll-behavior: smooth;
+  /* 锚点跳转时给固定顶栏留出空间 */
+  scroll-padding-top: calc(var(--header-h) + var(--s-4));
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html { scroll-behavior: auto; }
+}
+
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--fg);
+  font: var(--t-body)/1.65 var(--font);
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+  /* 顶栏是 fixed，用它占位 */
+  padding-top: var(--header-h);
+  min-height: 100vh;
+  overflow-wrap: break-word;
+}
+
+/* 深色底 + 极轻的顶部渐变，给页面一点纵深，不做花哨背景 */
+body::before {
+  content: "";
+  position: fixed;
+  inset: 0 0 auto 0;
+  height: 420px;
+  pointer-events: none;
+  z-index: 0;
+  background:
+    radial-gradient(900px 320px at 50% -8%, rgba(225, 29, 46, .07), transparent 70%),
+    linear-gradient(180deg, rgba(255, 255, 255, .022), transparent);
+}
+
+h1, h2, h3, h4 {
+  margin: 0 0 var(--s-3);
+  line-height: 1.2;
+  letter-spacing: -.01em;
+  font-weight: 650;
+}
+h1 { font-size: var(--t-h1); }
+h2 { font-size: var(--t-h2); }
+h3 { font-size: var(--t-h3); }
+h4 { font-size: var(--t-body); color: var(--fg-2); }
+
+p { margin: 0 0 var(--s-3); }
+p:last-child { margin-bottom: 0; }
+
+a { color: var(--fg); text-decoration: none; }
+a:hover { color: var(--brand-hover); }
+/* 正文里的链接需要能看出来是链接 */
+.prose a, .link {
+  color: var(--info);
+  text-decoration: underline;
+  text-underline-offset: 2px;
+  text-decoration-color: rgba(126, 160, 255, .4);
+}
+.prose a:hover, .link:hover { color: var(--brand-hover); text-decoration-color: currentColor; }
+
+img, video, svg { max-width: 100%; display: block; }
+img { height: auto; }
+
+ul, ol { margin: 0 0 var(--s-3); padding-left: 1.35em; }
+li { margin-bottom: var(--s-1); }
+
+hr { border: 0; border-top: 1px solid var(--line); margin: var(--s-6) 0; }
+
+code, kbd, pre, samp { font-family: var(--mono); font-size: .92em; }
+code {
+  background: var(--surface-2);
+  border: 1px solid var(--line);
+  border-radius: var(--r-1);
+  padding: 1px 5px;
+  color: var(--fg);
+}
+pre {
+  background: var(--surface-1);
+  border: 1px solid var(--line);
+  border-radius: var(--r-2);
+  padding: var(--s-4);
+  overflow-x: auto;
+  margin: 0 0 var(--s-4);
+  box-shadow: var(--metal-top);
+}
+pre code { background: none; border: 0; padding: 0; }
+
+kbd {
+  background: var(--surface-3);
+  border: 1px solid var(--line-strong);
+  border-bottom-width: 2px;
+  border-radius: var(--r-1);
+  padding: 1px 6px;
+  font-size: .85em;
+  color: var(--fg);
+}
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+  margin: 0 0 var(--s-4);
+  font-size: var(--t-sm);
+}
+th, td {
+  text-align: left;
+  padding: var(--s-2) var(--s-3);
+  border-bottom: 1px solid var(--line);
+  vertical-align: top;
+}
+th { color: var(--fg-2); font-weight: 600; white-space: nowrap; }
+tbody tr:hover { background: rgba(255, 255, 255, .02); }
+
+blockquote {
+  margin: 0 0 var(--s-4);
+  padding: var(--s-3) var(--s-4);
+  border-left: 3px solid var(--line-strong);
+  background: var(--surface-1);
+  border-radius: 0 var(--r-2) var(--r-2) 0;
+  color: var(--fg-2);
+}
+
+/* —— 可达性 —— */
+:focus-visible {
+  outline: 2px solid var(--brand-hover);
+  outline-offset: 2px;
+  border-radius: var(--r-1);
+}
+/* 鼠标点击不要留焦点圈，键盘才留 */
+:focus:not(:focus-visible) { outline: none; }
+
+.sr-only {
+  position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px;
+  overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; border: 0;
+}
+/* 跳到主内容（键盘用户第一个焦点） */
+.skip {
+  position: absolute; left: var(--s-3); top: -100px;
+  z-index: 200; padding: var(--s-2) var(--s-4);
+  background: var(--brand); color: var(--brand-ink);
+  border-radius: var(--r-2); font-weight: 600;
+  transition: top var(--dur-2) var(--ease);
+}
+.skip:focus { top: calc(var(--header-h) + var(--s-2)); }
+
+::selection { background: var(--brand-dim); color: var(--fg); }
+
+/* 滚动条：细，不抢视线 */
+* { scrollbar-width: thin; scrollbar-color: var(--surface-3) transparent; }
+::-webkit-scrollbar { width: 10px; height: 10px; }
+::-webkit-scrollbar-thumb {
+  background: var(--surface-3);
+  border-radius: var(--r-pill);
+  border: 2px solid var(--bg);
+}
+::-webkit-scrollbar-thumb:hover { background: var(--line-strong); }
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: .001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: .001ms !important;
+  }
+}
