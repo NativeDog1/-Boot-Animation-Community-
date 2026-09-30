@@ -12,6 +12,11 @@ __pycache__/
 # 提交信息草稿（写一次性的长提交说明时用，不要进仓库）
 .commitmsg.txt
 .commit-msg*.txt
+.msg*.txt
+
+# 一次性补丁/诊断脚本（tools/ 下真正要保留的是 build-site.mjs、verify-site.mjs、
+# catalog.test.mjs；点开头的是临时工具）
+tools/.*.mjs
 
 # ⚠️ 这个工作流文件暂时不能提交：
 # gh 用的 OAuth token 不允许推送 .github/workflows/ 下的文件（GitHub 的安全限制）。
