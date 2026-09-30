@@ -661,7 +661,7 @@ a.tag:hover { color: var(--fg); border-color: var(--line-strong); }
   gap: var(--s-6);
   margin-bottom: var(--s-6);
 }
-.site-footer__col h4 { color: var(--fg); font-size: var(--t-sm); margin-bottom: var(--s-3); }
+.site-footer__title { color: var(--fg); font-size: var(--t-sm); margin-bottom: var(--s-3); }
 .site-footer__col ul { list-style: none; padding: 0; margin: 0; }
 .site-footer__col li { margin-bottom: var(--s-2); }
 .site-footer__col a { color: var(--fg-2); font-size: var(--t-sm); }
@@ -675,7 +675,7 @@ a.tag:hover { color: var(--fg); border-color: var(--line-strong); }
 /* ─────────────────────────────── 文档页 ─────────────────────────────── */
 .docs-layout { display: grid; grid-template-columns: 232px minmax(0, 1fr); gap: var(--s-7); }
 .docs-nav { position: sticky; top: calc(var(--header-h) + var(--s-5)); align-self: start; }
-.docs-nav h4 { font-size: var(--t-xs); letter-spacing: .1em; text-transform: uppercase; color: var(--fg-3); margin-bottom: var(--s-3); }
+.docs-nav__title { font-size: var(--t-xs); letter-spacing: .1em; text-transform: uppercase; color: var(--fg-3); margin-bottom: var(--s-3); }
 .docs-nav ul { list-style: none; padding: 0; margin: 0; }
 .docs-nav li { margin-bottom: 2px; }
 .docs-nav a {

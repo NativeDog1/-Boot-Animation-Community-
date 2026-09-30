@@ -178,6 +178,27 @@ for (const asset of [
   if (!existsSync(join(DOCS, asset))) fail(`缺资源 ${asset}`);
 }
 
+/* ── 8. 标题层级：第一个必须是 h1、h1 恰好一个、不许跳级 ──
+   这一条是补的：曾经动画库页 h1 直接跳到 h3（卡片标题），作者页更糟 ——
+   JS 跑起来会把 h1 一起抹掉。层级乱了读屏用户会失去页面结构的线索。 */
+for (const page of pages) {
+  const html = readFileSync(page, 'utf8');
+  const name = rel(page);
+  const levels = [...html.matchAll(/<h([1-6])[\s>]/g)].map((m) => Number(m[1]));
+  if (!levels.length) {
+    fail(`${name}: 一个标题标签都没有`);
+    continue;
+  }
+  if (levels[0] !== 1) fail(`${name}: 第一个标题是 h${levels[0]}，应为 h1`);
+  const h1Count = levels.filter((l) => l === 1).length;
+  if (h1Count !== 1) fail(`${name}: h1 有 ${h1Count} 个（应为 1）`);
+  let prev = 0;
+  for (const level of levels) {
+    if (prev && level > prev + 1) fail(`${name}: 标题层级从 h${prev} 跳到 h${level}`);
+    prev = level;
+  }
+}
+
 /* ── 输出 ── */
 console.log(`页面 ${pages.length} 个 · 目录 ${entries.length} 条`);
 if (notes.length) {

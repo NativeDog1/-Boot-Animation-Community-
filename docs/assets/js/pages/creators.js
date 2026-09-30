@@ -10,7 +10,10 @@ import { creatorsOf } from '../catalog.js';
 import { rootPath } from '../config.js';
 
 export async function init({ repo }) {
-  const host = $('#ba-main');
+  // 只填列表容器 —— 不要 replaceChildren(#ba-main)，那会把页面标题 h1 一起抹掉，
+  // 读屏用户就失去了"这是哪个页面"的线索。
+  const host = $('#ba-creators-list') || $('#ba-main');
+  const note = $('#ba-creators-note');
   if (!host) return;
 
   let entries = [];
@@ -30,6 +33,7 @@ export async function init({ repo }) {
   clear(host);
 
   if (!creators.length) {
+    if (note) note.textContent = '';
     host.append(stateBlock({
       kind: 'empty',
       title: '还没有作者',
@@ -42,7 +46,7 @@ export async function init({ repo }) {
     return;
   }
 
-  host.append(el('p', { class: 'muted small', style: 'margin-bottom:var(--s-5)', text: `${creators.length} 位作者 · 共 ${entries.length} 个动画。作者名来自条目里的 author 字段，没有账号体系。` }));
+  if (note) note.textContent = `${creators.length} 位作者 · 共 ${entries.length} 个动画。作者名来自条目里的 author 字段，没有账号体系。`;
 
   const grid = el('div', { class: 'grid' });
   for (const c of creators) grid.append(creatorCard(c));

@@ -35,8 +35,10 @@ export async function init({ repo }) {
 
   // 补一个真实可点的 GitHub 链接：只有作者名长得像用户名时才给（不猜、不拼错就装懂）
   const looksLikeUser = /^[A-Za-z0-9](?:[A-Za-z0-9-]{0,37})$/.test(creator.id);
+  // 标题与条数生成器已经预渲染好了（禁用 JS 也有标题）。只在它缺失时才自己渲染，
+  // 否则会渲染出两个 h1 —— 那比没有标题更糟。
   const heading = $('#ba-creator-head');
-  if (heading) {
+  if (heading && !heading.childElementCount) {
     clear(heading);
     heading.append(el('h1', { text: creator.name }));
     const meta = [`${creator.count} 个动画`];

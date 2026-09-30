@@ -57,39 +57,39 @@
       <a href="../../docs/">文档</a><span class="breadcrumb__sep">/</span><span>常见问题</span>
     </nav>
     <div class="docs-layout">
-      <nav class="docs-nav" aria-label="文档目录"><h4>开始</h4><ul><li><a href="../../docs/getting-started/">开机动画是什么</a></li><li><a href="../../docs/installation/">安装与卸载</a></li></ul><h4>使用</h4><ul><li><a href="../../docs/importing-animations/">装一个社区动画</a></li><li><a href="../../docs/compatibility/">兼容性与格式要求</a></li></ul><h4>制作与投稿</h4><ul><li><a href="../../docs/creating-animations/">做一个自己的动画</a></li><li><a href="../../docs/submission/">投稿到社区</a></li></ul><h4>排错与恢复</h4><ul><li><a href="../../docs/troubleshooting/">排错</a></li><li><a href="../../docs/recovery/">出问题怎么恢复</a></li><li><a href="../../docs/faq/" aria-current="page">常见问题</a></li></ul></nav>
+      <nav class="docs-nav" aria-label="文档目录"><div class="docs-nav__title">开始</div><ul><li><a href="../../docs/getting-started/">开机动画是什么</a></li><li><a href="../../docs/installation/">安装与卸载</a></li></ul><div class="docs-nav__title">使用</div><ul><li><a href="../../docs/importing-animations/">装一个社区动画</a></li><li><a href="../../docs/compatibility/">兼容性与格式要求</a></li></ul><div class="docs-nav__title">制作与投稿</div><ul><li><a href="../../docs/creating-animations/">做一个自己的动画</a></li><li><a href="../../docs/submission/">投稿到社区</a></li></ul><div class="docs-nav__title">排错与恢复</div><ul><li><a href="../../docs/troubleshooting/">排错</a></li><li><a href="../../docs/recovery/">出问题怎么恢复</a></li><li><a href="../../docs/faq/" aria-current="page">常见问题</a></li></ul></nav>
       <article class="prose">
         <h1>常见问题</h1>
         <p class="muted">10 个最常被问到的问题</p>
         
-<h3>它会改我的开机徽标或开机画面吗？</h3>
+<h2>它会改我的开机徽标或开机画面吗？</h2>
 <p>不会。它在登录完成、桌面出来之后才播放几秒，然后自动消失。开机自检和登录界面的样子不会因为它有任何改变 —— 它不是「改开机画面」的软件。</p>
 
-<h3>会不会伤系统？</h3>
+<h2>会不会伤系统？</h2>
 <p>它只写三处：自己的程序目录、<code>HKCU</code> 下的一个自启键值、以及自己的数据目录。不改系统级设置、不装驱动、不碰系统文件。想退随时能退，最坏情况也只是动画挡了一下屏幕。</p>
 
-<h3>要不要管理员权限？</h3>
+<h2>要不要管理员权限？</h2>
 <p>不要。安装、运行、卸载都不需要管理员。正因为是写当前用户的自启键值，所以卸载干净利落。</p>
 
-<h3>能用自己的视频吗？</h3>
+<h2>能用自己的视频吗？</h2>
 <p>能。用 <code>--file "D:我的片头.mp4"</code> 播放任意本地视频试看。想让别人也能用，就按兼容性页面里的参数导出，然后投到社区。</p>
 
-<h3>支持几台电脑？</h3>
+<h2>支持几台电脑？</h2>
 <p>软件本身没有账号、没有激活、也没有联网校验，装到哪台 Windows 10 / 11 x64 上都能用。具体授权范围以你取得安装包时看到的说明为准。</p>
 
-<h3>动画太长怎么办？</h3>
+<h2>动画太长怎么办？</h2>
 <p>用 <code>--seconds 5</code> 限制播放秒数，到点自动关闭。另外自启默认带一个 3 秒延迟，让桌面先铺好再显示。投稿时建议控制在 5–10 秒，超过 10 秒会让人等得烦。</p>
 
-<h3>卸载会删我的片子吗？</h3>
+<h2>卸载会删我的片子吗？</h2>
 <p>不会。卸载只删程序、自启、快捷方式和卸载条目，<code>%LOCALAPPDATA%BootAnimation</code> 是保留的，你的选片、日志和从社区装的视频都还在。想彻底清干净，手动删掉这个目录即可。</p>
 
-<h3>为什么第一次运行会有警告？</h3>
+<h2>为什么第一次运行会有警告？</h2>
 <p>因为安装包<strong>目前没有代码签名</strong>，Windows 的 SmartScreen 会拦一下，弹「Windows 已保护你的电脑」。点「更多信息 → 仍要运行」就能继续。这是微软对未签名程序的默认策略，不是病毒报警。</p>
 
-<h3>能离线用吗？</h3>
+<h2>能离线用吗？</h2>
 <p>能。内置四段片头已经内嵌在程序里，装完不联网也能播。只有从社区装别人的动画时才需要联网下载那个视频。</p>
 
-<h3>会不会拖慢开机？</h3>
+<h2>会不会拖慢开机？</h2>
 <p>播放器要等桌面铺好（自启默认延迟 3 秒）再显示，播几秒就自己退出，不会一直挂在后台。所以它不会挡住登录过程，也不会让你多等很久。</p>
 
         <hr>
@@ -108,12 +108,12 @@
   <div class="wrap">
     <div class="site-footer__grid">
       <div class="site-footer__col">
-        <h4>Boot Animation</h4>
+        <h2 class="site-footer__title">Boot Animation</h2>
         <p class="muted small">YOUR BOOT. YOUR IDENTITY.<br>登录后播放几秒的开机片头，配一个公开的社区动画库。</p>
       </div>
-      <div class="site-footer__col"><h4>产品</h4><ul><li><a href="../../download/">下载软件</a></li><li><a href="../../animations/">动画库</a></li><li><a href="../../community/">社区与投稿</a></li><li><a href="../../changelog/">更新日志</a></li></ul></div>
-      <div class="site-footer__col"><h4>文档</h4><ul><li><a href="../../docs/getting-started/">快速开始</a></li><li><a href="../../docs/installation/">安装与卸载</a></li><li><a href="../../docs/importing-animations/">装一个社区动画</a></li><li><a href="../../docs/recovery/">出问题怎么恢复</a></li></ul></div>
-      <div class="site-footer__col"><h4>社区</h4><ul><li><a href="https://github.com/NativeDog1/-Boot-Animation-Community-">数据仓库</a></li><li><a href="https://github.com/NativeDog1/-Boot-Animation-Community-/blob/main/SCHEMA.md">条目规范</a></li><li><a href="https://github.com/NativeDog1/-Boot-Animation-Community-/issues/new?template=submit-animation.yml">投稿</a></li><li><a href="https://github.com/NativeDog1/-Boot-Animation-Community-/issues/new?template=report.yml">举报内容</a></li></ul></div>
+      <div class="site-footer__col"><h2 class="site-footer__title">产品</h2><ul><li><a href="../../download/">下载软件</a></li><li><a href="../../animations/">动画库</a></li><li><a href="../../community/">社区与投稿</a></li><li><a href="../../changelog/">更新日志</a></li></ul></div>
+      <div class="site-footer__col"><h2 class="site-footer__title">文档</h2><ul><li><a href="../../docs/getting-started/">快速开始</a></li><li><a href="../../docs/installation/">安装与卸载</a></li><li><a href="../../docs/importing-animations/">装一个社区动画</a></li><li><a href="../../docs/recovery/">出问题怎么恢复</a></li></ul></div>
+      <div class="site-footer__col"><h2 class="site-footer__title">社区</h2><ul><li><a href="https://github.com/NativeDog1/-Boot-Animation-Community-">数据仓库</a></li><li><a href="https://github.com/NativeDog1/-Boot-Animation-Community-/blob/main/SCHEMA.md">条目规范</a></li><li><a href="https://github.com/NativeDog1/-Boot-Animation-Community-/issues/new?template=submit-animation.yml">投稿</a></li><li><a href="https://github.com/NativeDog1/-Boot-Animation-Community-/issues/new?template=report.yml">举报内容</a></li></ul></div>
     </div>
     <div class="site-footer__bottom">
       <span>数据来自 GitHub 仓库，视频由各自作者托管；本站没有服务器，也不做转存。</span>

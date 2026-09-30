@@ -133,14 +133,14 @@ function header(depth, current) {
 
 function footer(depth) {
   const p = prefix(depth);
-  const col = (title, items) => `<div class="site-footer__col"><h4>${title}</h4><ul>${items
+  const col = (title, items) => `<div class="site-footer__col"><h2 class="site-footer__title">${title}</h2><ul>${items
     .map((i) => `<li><a href="${i.href}">${i.label}</a></li>`)
     .join('')}</ul></div>`;
   return `<footer class="site-footer">
   <div class="wrap">
     <div class="site-footer__grid">
       <div class="site-footer__col">
-        <h4>${SITE.name}</h4>
+        <h2 class="site-footer__title">${SITE.name}</h2>
         <p class="muted small">${SITE.tagline}<br>登录后播放几秒的开机片头，配一个公开的社区动画库。</p>
       </div>
       ${col('产品', [
@@ -399,6 +399,7 @@ function libraryPage(entries, p) {
     </div>
     <div id="ba-filters" class="stack" style="margin-bottom:var(--s-5)"></div>
     <p class="muted small" id="ba-status" style="margin-bottom:var(--s-4)"></p>
+    <h2 class="sr-only">动画列表</h2>
     <div id="ba-grid" class="grid">${cards}</div>${overflow}
     <div class="btn-row" style="justify-content:center;margin-top:var(--s-6)">
       <button class="btn" id="ba-more" type="button" hidden>继续加载</button>
@@ -505,8 +506,9 @@ function creatorsPage(p) {
   <div class="wrap">
     <nav class="breadcrumb" aria-label="面包屑"><a href="${p}">首页</a><span class="breadcrumb__sep">/</span><span>作者</span></nav>
     <h1>作者</h1>
-    <div id="ba-main-inner" hidden></div>
-    <div id="ba-creators-note" class="muted small"></div>
+    <p class="muted small" id="ba-creators-note"></p>
+    <h2 class="sr-only">作者列表</h2>
+    <div id="ba-creators-list"></div>
   </div>
 </section>
 `;
@@ -519,7 +521,11 @@ function creatorPage(creator, entries, p) {
       <a href="${p}">首页</a><span class="breadcrumb__sep">/</span>
       <a href="${p}creators/">作者</a><span class="breadcrumb__sep">/</span><span>${esc(creator)}</span>
     </nav>
-    <div id="ba-creator-head" style="margin-bottom:var(--s-5)"></div>
+    <div id="ba-creator-head" style="margin-bottom:var(--s-5)">
+      <h1>${esc(creator)}</h1>
+      <p class="muted">${entries.length} 个动画</p>
+    </div>
+    <h2 class="sr-only">这位作者的动画</h2>
     <div id="ba-creator-list">
       <div class="grid">${entries.map((e) => staticCard(e, p)).join('')}</div>
     </div>
@@ -649,7 +655,7 @@ function docPage(doc, docs, groups, p) {
   const nav = groups.map((g) => {
     const items = docs.filter((d) => d.group === g.id).sort((a, b) => (a.order || 0) - (b.order || 0));
     if (!items.length) return '';
-    return `<h4>${esc(g.label)}</h4><ul>${items.map((d) => `<li><a href="${p}docs/${d.slug}/"${d.slug === doc.slug ? ' aria-current="page"' : ''}>${esc(d.title)}</a></li>`).join('')}</ul>`;
+    return `<div class="docs-nav__title">${esc(g.label)}</div><ul>${items.map((d) => `<li><a href="${p}docs/${d.slug}/"${d.slug === doc.slug ? ' aria-current="page"' : ''}>${esc(d.title)}</a></li>`).join('')}</ul>`;
   }).join('');
   const idx = docs.findIndex((d) => d.slug === doc.slug);
   const prev = docs[idx - 1];
