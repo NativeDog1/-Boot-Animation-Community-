@@ -1,0 +1,21 @@
+# 由作者 NativeDog1 通过 gh 直接上架（视频已托管在本仓库 Release assets-v1）
+id: nativedog1__0c2707ed
+name: 拯救者开机动画
+author: NativeDog1
+description: 暗黑科幻人物，红色面罩与红色光效，深色调，适合夜间开机
+video: https://github.com/NativeDog1/-Boot-Animation-Community-/releases/download/assets-v1/nativedog1__0c2707ed.mp4
+sha256: '0c2707edb64d0d4861427c505d697964b35e8200b332fb2e582b168af300b090'
+bytes: 36316196
+width: 2560
+height: 1440
+fps: 90
+duration: 8.06
+preview: https://raw.githubusercontent.com/NativeDog1/-Boot-Animation-Community-/main/data/previews/nativedog1__0c2707ed.jpg
+license: 自创，允许自由转载
+nsfw: false
+submitted: '2026-10-04'
+tags:
+  - 2K
+  - 科幻
+  - 红色
+has_audio: true
